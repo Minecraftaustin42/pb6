@@ -11,39 +11,39 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/seo", express.static(path.join(__dirname, "public", "seo")));
 
-// In-memory databases
+
 const DB_FILE = path.join(__dirname, 'db.json');
 let db = {
     users: [], sessions: {}, games: [], shopItems: [], clothingItems: [], blueprints: [], jams: [], groups: [], cityPlots: [], datastores: {},
-    globalChat: [], toolboxItems: [], // NEW
+    globalChat: [], toolboxItems: [], 
     chatLogs: [],
     systemState: { restartUntil: 0, restartMessage: '' },
     reports: [],
     notifications: [],
-    moderation: { bans: {}, ipBans: [], warnings: {} },  // <-- ADD THIS LINE
+    moderation: { bans: {}, ipBans: [], warnings: {} },  
     friendPetDaily: {},
     live: { accounts: [], channelStats: {} }
 };
 
-let chatActivity = {}; // Tracks timestamps for spam { userId: [timestamps] }
-let chatSuspensions = {}; // Tracks suspensions { userId: unbanTimestamp }
+let chatActivity = {}; 
+let chatSuspensions = {}; 
 
 let activeEditors = {}; 
-let deletedObjectTombstones = {}; // { [gameId]: { [objectId]: { ownerId, deletedAt } } }
+let deletedObjectTombstones = {}; 
 let activePlayers = {}; 
 let activePlayDynamic = {};
 let onlineUsers = {};   
-let gameChats = {}; // { [gameId]: [messages] }
-let gameChatActivity = {}; // { [gameId_userId]: [timestamps] }
-let gameChatSuspensions = {}; // { [gameId_userId]: unbanTimestamp }
-let gameServerLastSeen = {}; // { [gameId]: timestamp }
-let liveStreams = {}; // { [streamId]: { ...runtime state... } }
+let gameChats = {}; 
+let gameChatActivity = {}; 
+let gameChatSuspensions = {}; 
+let gameServerLastSeen = {}; 
+let liveStreams = {}; 
 let adminAuth = { attempts: 0, lockoutUntil: 0 };
 const RESTART_POPUP_TEXT = 'Playsculpt servers are restarting! You do not need to take any action if you’re in a game or in studio, you will stay in. Please wait around 10 seconds to be automatically reconnected!';
 let restartState = { active: false, startedAt: 0, endsAt: 0, message: '' };
 let httpServer = null;
 const systemEventClients = new Set();
-// Load existing DB if available & migrate data
+
 if (fs.existsSync(DB_FILE)) {
 
 
@@ -53,7 +53,7 @@ if (!db.notifications) db.notifications = [];
 if (!db.reports) db.reports = [];
 if (!db.chatLogs) db.chatLogs = [];
 if (!db.systemState) db.systemState = { restartUntil: 0, restartMessage: '' };
-if (!db.moderation) db.moderation = { bans: {}, ipBans: [], warnings: {} }; // <-- ADD THIS LINE
+if (!db.moderation) db.moderation = { bans: {}, ipBans: [], warnings: {} }; 
 if (!db.friendPetDaily) db.friendPetDaily = {};
 if (!db.live) db.live = { accounts: [], channelStats: {} };
     try {
@@ -96,10 +96,10 @@ if (!u.toolboxInventory) u.toolboxInventory = [];
             if (!u.jamVotes) u.jamVotes = {};
             if (!u.blueprintFavorites) u.blueprintFavorites = [];
 
-// Add this right after parsing db.json
+
 if (typeof db.lastUserIdNum === 'undefined') {
     db.lastUserIdNum = 0;
-    // Retroactively assign sequential IDs to existing users
+    
     db.users.forEach(u => {
         if (typeof u.userIdNum === 'undefined') {
             db.lastUserIdNum++;
@@ -120,11 +120,11 @@ if (typeof db.lastUserIdNum === 'undefined') {
             if (!u.profileTextStyle) u.profileTextStyle = { font: 'default', color: '#2c3e50' };
             if (typeof u.lastSeenAt === 'undefined') u.lastSeenAt = Date.now();
             if (typeof u.primaryGroupId === 'undefined') u.primaryGroupId = null; 
-            if (typeof u.coins === 'undefined') u.coins = 0; // Migrate coins to backend
-if (typeof u.lastSpinDate === 'undefined') u.lastSpinDate = 0; // NEW: Lucky Spin Tracker
+            if (typeof u.coins === 'undefined') u.coins = 0; 
+if (typeof u.lastSpinDate === 'undefined') u.lastSpinDate = 0; 
 
 if (typeof u.lastPlayDate === 'undefined') u.lastPlayDate = 0;
-            if (typeof u.cityData === 'undefined') u.cityData = null; // NEW: Track if user is in Sculpt City
+            if (typeof u.cityData === 'undefined') u.cityData = null; 
             if (u.cityData) {
                 if (typeof u.cityData.tutorialComplete === 'undefined') u.cityData.tutorialComplete = false;
                 if (typeof u.cityData.bucks !== 'undefined') {
@@ -152,7 +152,7 @@ if (typeof u.loginStreak === 'undefined') u.loginStreak = 0;
             if (!g.updates) g.updates = []; 
 if (!g.versions) g.versions = [{ versionId: 1, timestamp: g.createdAt ? new Date(g.createdAt).getTime() : Date.now(), gameData: g.gameData }];
             if (!g.genre) g.genre = 'Sandbox'; 
-            // Database Migration for Analytics
+            
 if (!g.analytics) {
     g.analytics = {
         uniquePlayers: [],
@@ -167,7 +167,7 @@ if (!g.analytics) {
             if (typeof g.groupId === 'undefined') g.groupId = null;
         });
 
-        // Migrate Groups to advanced roles system
+        
         db.groups.forEach(gr => {
             if (typeof gr.level === 'undefined') gr.level = 1;
             if (typeof gr.xp === 'undefined') gr.xp = 0;
@@ -240,7 +240,7 @@ const removeFakeBotUsers = () => {
 };
 removeFakeBotUsers();
 
-// --- Security / Auth Helpers ---
+
 const hashPassword = (password) => {
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
@@ -361,7 +361,7 @@ function createNotification(userId, type, data) {
     db.notifications.push({
         id: crypto.randomUUID(),
         userId,
-        type, // "invite", "friend_request", "message"
+        type, 
         data,
         read: false,
         createdAt: Date.now()
@@ -622,7 +622,7 @@ const grantFriendshipXp = (userId, friendId, amount = 5) => {
     const linkA = ensureFriendLink(user, friendId);
     const linkB = ensureFriendLink(friend, userId);
 
-    if (now - linkA.lastXpAt < 30000) return; // throttle
+    if (now - linkA.lastXpAt < 30000) return; 
 
     linkA.xp += amount;
     linkB.xp += amount;
@@ -717,32 +717,32 @@ const addGroupXp = (group, amount) => {
 
     group.xp += amount;
     
-    // Progressively harder: Level 2 needs 50 XP, then grows by 1.5x each level
+    
     let requiredXp = Math.floor(50 * Math.pow(1.5, group.level - 1));
     let requiredMembers = group.level === 1 ? 2 : Math.min(group.level + 1, 10); 
 
     while (group.xp >= requiredXp && group.members.length >= requiredMembers) {
-        group.xp -= requiredXp; // Consume XP to level up
+        group.xp -= requiredXp; 
         group.level += 1;
         
-        // Level Up Rewards
+        
         if (group.level % 10 === 0) {
-            group.coins = (group.coins || 0) + 250; // Milestone Reward
+            group.coins = (group.coins || 0) + 250; 
         } else {
-            group.coins = (group.coins || 0) + 100; // Standard Reward
+            group.coins = (group.coins || 0) + 100; 
         }
         
-        // Recalculate for next iteration in case of massive XP gain
+        
         requiredXp = Math.floor(50 * Math.pow(1.5, group.level - 1));
         requiredMembers = group.level === 1 ? 2 : Math.min(group.level + 1, 10);
     }
 };
 
 
-// --- Moderator / Mod Panel Helpers ---
-const modPanelSessions = {}; // token -> expiresAt
+
+const modPanelSessions = {}; 
 const MOD_PANEL_CODE = '5045';
-const MOD_PANEL_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+const MOD_PANEL_DURATION_MS = 10 * 60 * 1000; 
 
 const getUserById = (userId) => db.users.find(u => u.id === userId);
 
@@ -858,11 +858,11 @@ const rollReportCrateReward = () => {
 };
 
 
-// --- Routes ---
 
 
 
-// --- Mod Panel Security ---
+
+
 app.post('/api/mod-panel/unlock', requireAuth, requireModerator, (req, res) => {
     const { code } = req.body;
 
@@ -933,7 +933,7 @@ app.post('/api/signup', (req, res) => {
     }
 
 if (typeof db.lastUserIdNum !== 'number') {
-        db.lastUserIdNum = db.users.length; // Fallback to current user count
+        db.lastUserIdNum = db.users.length; 
     }
     db.lastUserIdNum++; 
     const userIdNum = db.lastUserIdNum;
@@ -941,7 +941,7 @@ if (typeof db.lastUserIdNum !== 'number') {
     const { salt, hash } = hashPassword(password);
    const newUser = {
         id: crypto.randomUUID(), username, salt, hash,
-        createdAt: Date.now(), // ADD THIS LINE!
+        createdAt: Date.now(), 
 userIdNum: userIdNum,
         followers: [], friends: [], friendRequests: [],
         color: '#e74c3c', recentlyPlayed: [], badges: [], messages: [],
@@ -959,7 +959,7 @@ onlineUsers[newUser.id] = { lastSeen: Date.now(), location: 'website' };
     res.json({ token, username: newUser.username, userId: newUser.id, color: newUser.color, equipped: newUser.equipped, coins: newUser.coins });
 });
 
-// Helper to format ban time
+
 const getBanMessage = (ban) => {
     if (ban.expires === 'permanent') return `Account permanently suspended. Reason: ${ban.reason}`;
     const msLeft = ban.expires - Date.now();
@@ -976,29 +976,29 @@ app.post('/api/login', (req, res) => {
         return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
-    // --- NEW ADMIN PIN SYSTEM ---
+    
     if (user.username.toLowerCase() === 'admin') {
         if (Date.now() < adminAuth.lockoutUntil) {
             const mins = Math.ceil((adminAuth.lockoutUntil - Date.now()) / 60000);
             return res.status(403).json({ error: `Too many attempts. PIN locked for ${mins} minutes.` });
         }
         if (pin === undefined) {
-            return res.json({ requiresPin: true }); // Tell frontend to show PIN UI
+            return res.json({ requiresPin: true }); 
         }
         if (pin !== '72891') {
             adminAuth.attempts++;
             if (adminAuth.attempts >= 2) {
-                adminAuth.lockoutUntil = Date.now() + 30 * 60 * 1000; // 30 Min Lockout
+                adminAuth.lockoutUntil = Date.now() + 30 * 60 * 1000; 
                 adminAuth.attempts = 0;
                 return res.status(403).json({ error: 'Too many attempts. PIN locked for 30 minutes.' });
             }
             return res.status(401).json({ error: 'Invalid PIN.' });
         }
-        adminAuth.attempts = 0; // Success, reset attempts
+        adminAuth.attempts = 0; 
     }
-    // ----------------------------
+    
 
-    // Enforce Bans
+    
     if (db.moderation && db.moderation.bans[user.id]) {
         const ban = db.moderation.bans[user.id];
         if (ban.expires === 'permanent' || ban.expires > Date.now()) {
@@ -1036,7 +1036,7 @@ if (!actingUser) {
     if (action === 'warn') {
         if (!db.moderation.warnings[target.id]) db.moderation.warnings[target.id] = [];
         db.moderation.warnings[target.id].push({ 
-            id: crypto.randomUUID(), // Unique ID so they can acknowledge it
+            id: crypto.randomUUID(), 
             reason, 
             date: Date.now(),
             acknowledged: false 
@@ -1055,10 +1055,10 @@ if (!actingUser) {
         }
         db.moderation.bans[target.id] = { reason, expires: 'permanent', isIpBan: true };
     }
-    // --- NEW UNBAN / UNWARN LOGIC ---
+    
     else if (action === 'unban') {
         if (db.moderation.bans[target.id]) {
-            // Also lift IP ban if applicable
+            
             if (db.moderation.bans[target.id].isIpBan && target.lastIp) {
                 db.moderation.ipBans = db.moderation.ipBans.filter(ip => ip !== target.lastIp);
             }
@@ -1068,7 +1068,7 @@ if (!actingUser) {
     else if (action === 'clearwarnings') {
         db.moderation.warnings[target.id] = [];
     }
-    // --------------------------------
+    
 
     saveDB(); 
     res.json({ success: true, message: `Action ${action} applied to ${target.username}` });
@@ -1215,7 +1215,7 @@ app.post('/api/me/report-crates/:crateId/open', requireAuth, (req, res) => {
     res.json({ success: true, rewardCoins: reward, coins: user.coins });
 });
 
-// User Endpoint: Acknowledge Warning
+
 app.post('/api/me/acknowledge-warning', requireAuth, (req, res) => {
     const { warningId } = req.body;
     const userWarnings = db.moderation.warnings[req.userId];
@@ -1237,15 +1237,15 @@ app.get('/api/restore', requireAuth, (req, res) => {
         if (ban.expires === 'permanent' || ban.expires > Date.now()) {
             delete db.sessions[req.headers.authorization]; 
             saveDB();
-            return res.status(403).json({ error: getBanMessage(ban) }); // UPDATED
+            return res.status(403).json({ error: getBanMessage(ban) }); 
         } else {
             delete db.moderation.bans[user.id];
             saveDB();
         }
     }
 
-    // Fetch unacknowledged warnings
-// Safely fetch unacknowledged warnings
+    
+
 let pendingWarnings = [];
 if (db.moderation && db.moderation.warnings && db.moderation.warnings[user.id]) {
     pendingWarnings = db.moderation.warnings[user.id].filter(w => w.acknowledged === false);
@@ -1272,7 +1272,7 @@ app.put('/api/me/settings', requireAuth, (req, res) => {
         }
         if (user.coins < 2000) return res.status(400).json({ error: 'You need 2000 SC to change your username.' });
         
-        user.coins -= 2000; // Deduct the SC fee
+        user.coins -= 2000; 
         user.username = newUsername;
 
         db.games.forEach(g => {
@@ -1903,13 +1903,13 @@ app.post('/api/blueprints/:id/favorite', requireAuth, (req, res) => {
     res.json({ success: true, favorited: !has, favorites: bp.favorites.length });
 });
 
-// ==========================================
-// TOOLBOX SYSTEM
-// ==========================================
+
+
+
 app.get('/api/toolbox', (req, res) => {
     let items = db.toolboxItems || [];
     
-    // NEW: Search functionality
+    
     if (req.query.q) {
         const q = req.query.q.toLowerCase();
         items = items.filter(i => i.name.toLowerCase().includes(q) || i.description.toLowerCase().includes(q));
@@ -1919,12 +1919,12 @@ app.get('/api/toolbox', (req, res) => {
 });
 
 app.get('/api/toolbox/sponsored', (req, res) => {
-    // Only show active sponsorships that haven't expired
+    
     let items = (db.toolboxItems || []).filter(i => i.sponsorBid && i.sponsorBid > 0 && i.sponsorExpiresAt > Date.now());
     items.sort((a,b) => b.sponsorBid - a.sponsorBid);
     res.json(items.slice(0, 5)); 
 });
-// NEW: Bid to Sponsor an Item
+
 app.post('/api/toolbox/sponsor/:id', requireAuth, (req, res) => {
     const item = db.toolboxItems.find(i => i.id === req.params.id);
     const user = db.users.find(u => u.id === req.userId);
@@ -1933,7 +1933,7 @@ app.post('/api/toolbox/sponsor/:id', requireAuth, (req, res) => {
     if (item.authorId !== user.id) return res.status(403).json({ error: 'You can only sponsor your own models.' });
     
     const bid = parseInt(req.body.bid);
-    const days = parseInt(req.body.days); // NEW: Get duration
+    const days = parseInt(req.body.days); 
     
     if (isNaN(bid) || bid <= 0) return res.status(400).json({ error: 'Invalid bid amount.' });
     if (isNaN(days) || days < 1 || days > 7) return res.status(400).json({ error: 'Sponsorship duration must be 1 to 7 days.' });
@@ -1941,21 +1941,21 @@ app.post('/api/toolbox/sponsor/:id', requireAuth, (req, res) => {
     
     user.coins -= bid;
     item.sponsorBid = (item.sponsorBid || 0) + bid;
-    // Set expiration date!
+    
     item.sponsorExpiresAt = Date.now() + (days * 24 * 60 * 60 * 1000); 
     saveDB();
     
     res.json({ message: `Sponsorship active for ${days} days!`, newBid: item.sponsorBid });
 });
 app.post('/api/toolbox', requireAuth, (req, res) => {
-    const { name, description, price, parts, thumbnail } = req.body; // ADD thumbnail HERE
+    const { name, description, price, parts, thumbnail } = req.body; 
     if (!name || !parts || parts.length === 0) return res.status(400).json({ error: 'Missing data.' });
 
     const user = db.users.find(u => u.id === req.userId);
     const newItem = {
         id: crypto.randomUUID(), name, description: description || '', price: parseInt(price) || 0,
         authorId: user.id, authorName: user.username, parts, 
-        thumbnail: thumbnail || null, // SAVE IT!
+        thumbnail: thumbnail || null, 
         likes: [], dislikes: [], createdAt: new Date().toISOString()
     };
     
@@ -1979,7 +1979,7 @@ app.post('/api/toolbox/buy/:id', requireAuth, (req, res) => {
     user.coins -= item.price;
     user.toolboxInventory.push(item.id);
 
-    // NEW: 100% Revenue Share to Creator!
+    
     const creator = db.users.find(u => u.id === item.authorId);
     if (creator) {
         creator.coins = (creator.coins || 0) + item.price;
@@ -1990,7 +1990,7 @@ app.post('/api/toolbox/buy/:id', requireAuth, (req, res) => {
 });
 
 app.post('/api/toolbox/rate/:id', requireAuth, (req, res) => {
-    // ... (Keep your existing rate POST route here) ...
+    
     const item = db.toolboxItems.find(i => i.id === req.params.id);
     if (!item) return res.status(404).json({ error: 'Item not found.' });
     const { action } = req.body; 
@@ -2008,27 +2008,27 @@ app.get('/api/toolbox/profile/:userId', (req, res) => {
     const u = db.users.find(x => x.id === req.params.userId || x.username === req.params.userId);
     if(!u) return res.status(404).json({error: 'User not found'});
     
-    // Grab all models made by this user
+    
     const models = (db.toolboxItems || []).filter(i => i.authorId === u.id);
     
     res.json({
         id: u.id, username: u.username, 
         tbBio: u.tbBio || 'This creator hasn\'t set a bio yet.', 
-        tbTheme: u.tbTheme || '#2c3e50', // Default theme
+        tbTheme: u.tbTheme || '#2c3e50', 
         models: models.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
     });
 });
 
-// NEW: Update Toolbox Profile (Bio & Theme)
+
 app.post('/api/toolbox/profile', requireAuth, (req, res) => {
     const { bio, theme } = req.body;
     const u = db.users.find(x => x.id === req.userId);
     
-    if (bio !== undefined) u.tbBio = bio.substring(0, 300); // Max 300 chars
+    if (bio !== undefined) u.tbBio = bio.substring(0, 300); 
     
     if (theme !== undefined && theme !== u.tbTheme) {
         if (u.coins < 5) return res.status(400).json({error: 'You need 5 Sculpt Coins to change your profile theme color.'});
-        u.coins -= 5; // Deduct the 5 SC fee
+        u.coins -= 5; 
         u.tbTheme = theme;
     }
     
@@ -2085,7 +2085,7 @@ app.get('/api/users/:username', (req, res) => {
     }).filter(Boolean);
     const pinnedGame = user.profilePinnedGame && user.profilePinnedGame.gameId ? db.games.find(g => g.id === user.profilePinnedGame.gameId && g.authorId === user.id) : null;
 
-    // Get groups
+    
     const userGroups = db.groups.filter(gr => gr.members.some(m => m.userId === user.id)).map(gr => {
         const mem = gr.members.find(m=>m.userId === user.id);
         const role = gr.roles.find(r => r.id === mem.roleId);
@@ -2190,7 +2190,7 @@ app.post('/api/users/:username/unfollow', requireAuth, (req, res) => {
     res.json({ message: 'Unfollowed successfully', followersCount: targetUser.followers.length });
 });
 
-// --- Advanced Groups Routes ---
+
 const getGroupMemberPerms = (group, userId) => {
     const mem = group.members.find(m => m.userId === userId);
     if (!mem) return null;
@@ -2205,15 +2205,15 @@ const getGroupMemberRank = (group, userId) => {
 };
 
 app.get('/api/groups/discover', (req, res) => {
-    // Calculate the "Activity Score" for every group
+    
     const groupsWithStats = db.groups.map(gr => {
         let activityScore = 0;
-        activityScore += (gr.posts || []).length * 2; // Wall posts
-        activityScore += (gr.threads || []).length * 5; // Forum threads
-        (gr.threads || []).forEach(t => activityScore += (t.replies || []).length * 3); // Forum replies
-        (gr.polls || []).forEach(p => p.options.forEach(o => activityScore += (o.votes || []).length * 4)); // Votes
+        activityScore += (gr.posts || []).length * 2; 
+        activityScore += (gr.threads || []).length * 5; 
+        (gr.threads || []).forEach(t => activityScore += (t.replies || []).length * 3); 
+        (gr.polls || []).forEach(p => p.options.forEach(o => activityScore += (o.votes || []).length * 4)); 
         
-        // Game plays on group games
+        
         const groupGames = db.games.filter(g => g.groupId === gr.id);
         groupGames.forEach(g => activityScore += (g.plays || 0));
 
@@ -2255,7 +2255,7 @@ app.post('/api/groups', requireAuth, (req, res) => {
     const rOwnerId = crypto.randomUUID();
     const rMemberId = crypto.randomUUID();
     
-    // Define the extensive list of permissions
+    
     const ownerPerms = { manageRanks: true, kickMembers: true, banMembers: true, editGames: true, deletePosts: true, manageCategories: true, manageEvents: true, managePayouts: true, manageShout: true, manageRelations: true, managePolls: true };
     const memberPerms = { manageRanks: false, kickMembers: false, banMembers: false, editGames: false, deletePosts: false, manageCategories: false, manageEvents: false, managePayouts: false, manageShout: false, manageRelations: false, managePolls: false };
 
@@ -2323,7 +2323,7 @@ app.post('/api/groups/:id/change-owner', requireAuth, (req, res) => {
 });
 
 
-// Post Group Shout
+
 app.post('/api/groups/:id/shout', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     const perms = getGroupMemberPerms(group, req.userId);
@@ -2331,7 +2331,7 @@ app.post('/api/groups/:id/shout', requireAuth, (req, res) => {
 
     const { text } = req.body;
     if (!text) {
-        group.shout = null; // Clear shout
+        group.shout = null; 
     } else {
         const user = db.users.find(u => u.id === req.userId);
         group.shout = { text: text.substring(0, 300), authorName: user.username, timestamp: Date.now() };
@@ -2340,7 +2340,7 @@ app.post('/api/groups/:id/shout', requireAuth, (req, res) => {
     res.json({ success: true, shout: group.shout });
 });
 
-// Ban User
+
 app.post('/api/groups/:id/ban/:username', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     const perms = getGroupMemberPerms(group, req.userId);
@@ -2357,13 +2357,13 @@ app.post('/api/groups/:id/ban/:username', requireAuth, (req, res) => {
     if (!group.banned) group.banned = [];
     if (!group.banned.includes(targetUser.id)) group.banned.push(targetUser.id);
     
-    // Also kick them immediately
+    
     group.members = group.members.filter(m => m.userId !== targetUser.id);
     saveDB();
     res.json({ success: true });
 });
 
-// Unban User
+
 app.post('/api/groups/:id/unban/:username', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     const perms = getGroupMemberPerms(group, req.userId);
@@ -2379,7 +2379,7 @@ app.post('/api/groups/:id/unban/:username', requireAuth, (req, res) => {
     res.json({ success: true });
 });
 
-// Create/Edit Role (Updated to accept full permissions object)
+
 app.post('/api/groups/:id/roles', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     const perms = getGroupMemberPerms(group, req.userId);
@@ -2389,12 +2389,12 @@ app.post('/api/groups/:id/roles', requireAuth, (req, res) => {
     if (rank >= 255) return res.status(400).json({ error: 'Cannot create/edit a role equal to or higher than Owner.' });
     
     if (roleId) {
-        // Edit existing
+        
         const role = group.roles.find(r => r.id === roleId);
         if (!role || role.rank >= 255) return res.status(400).json({ error: 'Invalid role.' });
         role.name = name; role.rank = parseInt(rank); role.perms = permissions;
     } else {
-        // Create new
+        
         const role = { id: crypto.randomUUID(), name, rank: parseInt(rank) || 10, perms: permissions || {} };
         group.roles.push(role);
     }
@@ -2409,7 +2409,7 @@ app.get('/api/groups/:id', (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     if (!group) return res.status(404).json({ error: 'Group not found.' });
 
-    // BAN CHECK: If the user requesting this is banned, instantly block them.
+    
     let reqUserId = null;
     if (req.headers.authorization && db.sessions[req.headers.authorization]) {
         reqUserId = db.sessions[req.headers.authorization];
@@ -2434,21 +2434,21 @@ app.get('/api/groups/:id', (req, res) => {
         myRank = getGroupMemberRank(group, reqUserId);
     }
 
-    // Map relations to names for the UI
+    
     const mapGroupBasic = (gId) => {
         const g = db.groups.find(x => x.id === gId);
         return g ? { id: g.id, name: g.name } : null;
     };
 
-    // Calculate Stats Dashboard Math
+    
     const totalPlays = groupGames.reduce((sum, g) => sum + (g.plays || 0), 0);
     const activeMembers = memberDetails.filter(m => m.isOnline).length;
     
-    // Calculate progressive next level requirements
+    
     const reqXp = Math.floor(50 * Math.pow(1.5, (group.level || 1) - 1));
     const reqMembers = (group.level || 1) === 1 ? 2 : Math.min((group.level || 1) + 1, 10);
 
-    // Populate Banned Users list for admins
+    
     let bannedUsersList = [];
     if (myPerms && myPerms.banMembers) {
         bannedUsersList = (group.banned || []).map(bId => {
@@ -2487,7 +2487,7 @@ res.json({
 });
 
 
-// Create a new Group Poll (Admins/Owners Only)
+
 app.post('/api/groups/:id/polls', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     if (!group) return res.status(404).json({ error: 'Group not found.' });
@@ -2515,7 +2515,7 @@ app.post('/api/groups/:id/polls', requireAuth, (req, res) => {
     res.json({ success: true, polls: group.polls });
 });
 
-// Vote on a Group Poll (Members Only)
+
 app.post('/api/groups/:id/polls/:pollId/vote', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     if (!group) return res.status(404).json({ error: 'Group not found.' });
@@ -2526,12 +2526,12 @@ app.post('/api/groups/:id/polls/:pollId/vote', requireAuth, (req, res) => {
 
     const { optionIndex } = req.body;
 
-    // Remove their previous vote if they are changing their mind
+    
     poll.options.forEach(o => {
         o.votes = o.votes.filter(id => id !== req.userId);
     });
 
-    // Cast new vote
+    
     if (poll.options[optionIndex]) {
         poll.options[optionIndex].votes.push(req.userId);
     }
@@ -2541,12 +2541,12 @@ app.post('/api/groups/:id/polls/:pollId/vote', requireAuth, (req, res) => {
 });
 
 
-// Manage Group Relations (Owners Only)
+
 app.post('/api/groups/:id/relations', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     if (!group) return res.status(404).json({ error: 'Group not found.' });
     
-    // Only Group Owners (Rank 255) can manage foreign relations
+    
     const myRank = getGroupMemberRank(group, req.userId);
     if (myRank < 255) return res.status(403).json({ error: 'Only the Group Owner can manage relations.' });
 
@@ -2558,12 +2558,12 @@ app.post('/api/groups/:id/relations', requireAuth, (req, res) => {
         return res.json({ success: true, allowEnemies: group.allowEnemies });
     }
 
-    // Find target group by ID or exact Name
+    
     const targetGroup = db.groups.find(gr => gr.id === target || gr.name.toLowerCase() === (target || '').toLowerCase());
     if (!targetGroup && !action.includes('remove')) return res.status(404).json({ error: 'Target group not found.' });
     if (targetGroup && group.id === targetGroup.id) return res.status(400).json({ error: 'Cannot target your own group.' });
 
-    // Initialize arrays if missing
+    
     if (!group.affiliates) group.affiliates = [];
     if (!group.affiliateRequests) group.affiliateRequests = [];
     if (!group.enemies) group.enemies = [];
@@ -2658,7 +2658,7 @@ app.post('/api/groups/:id/posts', requireAuth, (req, res) => {
         timestamp: ts
     });
 
-    addGroupXp(group, 5); // Earn XP for posting
+    addGroupXp(group, 5); 
     saveDB();
     res.json({ message: 'Posted successfully!', posts: group.posts.slice(0, 50) });
 });
@@ -2686,7 +2686,7 @@ app.post('/api/me/claim-login', requireAuth, (req, res) => {
     yesterday.setDate(yesterday.getDate() - 1);
     
     if (lastLoginStr === yesterday.toDateString()) user.loginStreak += 1;
-    else user.loginStreak = 1; // Reset streak if missed
+    else user.loginStreak = 1; 
 
     user.lastLoginDate = Date.now();
     let reward = (user.loginStreak % 7 === 0) ? 150 : 50;
@@ -2696,7 +2696,7 @@ app.post('/api/me/claim-login', requireAuth, (req, res) => {
     res.json({ success: true, coins: user.coins, streak: user.loginStreak, reward });
 });
 
-// Admin endpoints
+
 app.post('/api/groups/:id/roles', requireAuth, (req, res) => {
     const group = db.groups.find(gr => gr.id === req.params.id);
     const perms = getGroupMemberPerms(group, req.userId);
@@ -2790,7 +2790,7 @@ app.post('/api/groups/:id/forums/:catId', requireAuth, (req, res) => {
         timestamp: thread.timestamp,
         meta: { categoryId: req.params.catId }
     });
-    addGroupXp(group, 5); // XP for posting thread
+    addGroupXp(group, 5); 
     saveDB();
     res.json({ success: true });
 });
@@ -2830,7 +2830,7 @@ app.post('/api/groups/:id/threads/:threadId/replies', requireAuth, (req, res) =>
         timestamp: ts,
         meta: { threadId: thread.id }
     });
-    addGroupXp(group, 5); // XP for reply
+    addGroupXp(group, 5); 
     saveDB();
     res.json({ success: true, replies: thread.replies });
 });
@@ -2870,7 +2870,7 @@ app.post('/api/groups/:id/payout', requireAuth, (req, res) => {
 });
 
 
-// --- Shop & Economy Routes ---
+
 
 app.get('/api/shop/items', (req, res) => {
     const approved = (db.shopItems || []).filter(i => (i.status || 'approved') === 'approved');
@@ -3149,8 +3149,8 @@ app.post('/api/clothing/equip', requireAuth, (req, res) => {
     res.json({ equippedShirt: user.equippedShirt || null, equippedPants: user.equippedPants || null });
 });
 
-// --- Game Routes ---
-// Get Games Library (Search & Filter)
+
+
 app.get('/api/games', (req, res) => {
     let results = [...db.games];
     if (req.query.q) {
@@ -3168,7 +3168,7 @@ app.get('/api/games', (req, res) => {
 });
 
 
-// --- PLAYSCULPT DATASTORES ---
+
 app.post('/api/games/:id/datastore', requireAuth, (req, res) => {
     const { key, value } = req.body;
     if (!db.datastores[req.params.id]) db.datastores[req.params.id] = {};
@@ -3186,7 +3186,7 @@ app.get('/api/games/:id/datastore/:key', requireAuth, (req, res) => {
 
 
 
-// 2. Publish New Version
+
 app.post('/api/games/:id/publish', requireAuth, (req, res) => {
     const game = db.games.find(g => g.id === req.params.id);
     if (!game) return res.status(404).json({ error: 'Game not found.' });
@@ -3218,7 +3218,7 @@ app.post('/api/games/:id/publish', requireAuth, (req, res) => {
 });
 
 
-// 3. Fetch Version List (Metadata Only)
+
 app.get('/api/games/:id/versions', requireAuth, (req, res) => {
     const game = db.games.find(g => g.id === req.params.id);
     if (!game) return res.status(404).json({ error: 'Game not found.' });
@@ -3226,7 +3226,7 @@ app.get('/api/games/:id/versions', requireAuth, (req, res) => {
     res.json(versionList);
 });
 
-// 4. Fetch Specific Version Data
+
 app.get('/api/games/:id/versions/:vId', requireAuth, (req, res) => {
     const game = db.games.find(g => g.id === req.params.id);
     if (!game) return res.status(404).json({ error: 'Game not found.' });
@@ -3235,7 +3235,7 @@ app.get('/api/games/:id/versions/:vId', requireAuth, (req, res) => {
     res.json({ gameData: v.gameData });
 });
 
-// 5. Sound Service Routes
+
 app.post('/api/sounds', requireAuth, (req, res) => {
     const { name, data } = req.body;
     if (!name || !data) return res.status(400).json({ error: 'Missing data' });
@@ -3296,7 +3296,7 @@ app.get('/api/my-games', requireAuth, (req, res) => {
 });
 
 app.get('/api/games/trending', (req, res) => {
-    // Sort games by highest play count
+    
     const trending = [...db.games]
         .sort((a, b) => (b.plays || 0) - (a.plays || 0))
         .slice(0, 4)
@@ -3313,7 +3313,7 @@ app.get('/api/games/trending', (req, res) => {
 });
 
 
-// PUBLISH NEW GAME
+
 app.post('/api/games', requireAuth, (req, res) => {
     const { title, gameData, genre, groupId, icon, thumbnails } = req.body;
     if (!title || !gameData) return res.status(400).json({ error: 'Missing game data.' });
@@ -3337,11 +3337,11 @@ app.post('/api/games', requireAuth, (req, res) => {
         versions: [{ versionId: 1, timestamp: Date.now(), gameData: safeGameData }],
         analytics: { uniquePlayers: [], totalSessionTimeSeconds: 0, fallOffs: 0, peakCCU: 0, desktopSessions: 0, mobileSessions: 0, totalJumps: 0 },
         
-        // NEW: Image fields
-        icon: null, // Active square icon
-        pendingIcon: icon || null, // Awaiting admin approval
-        thumbnails: [], // Active horizontal thumbnails
-        pendingThumbnails: (thumbnails || []).slice(0, 10).map(t => ({ id: crypto.randomUUID(), data: t })) // Max 10
+        
+        icon: null, 
+        pendingIcon: icon || null, 
+        thumbnails: [], 
+        pendingThumbnails: (thumbnails || []).slice(0, 10).map(t => ({ id: crypto.randomUUID(), data: t })) 
     };
     db.games.push(newGame);
     saveDB();
@@ -3352,7 +3352,7 @@ app.post('/api/me/lucky-spin', requireAuth, (req, res) => {
     const user = db.users.find(u => u.id === req.userId);
     const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     
-    // Check if 7 days have passed since the last spin
+    
     if (Date.now() - (user.lastSpinDate || 0) < WEEK_MS) {
         return res.status(400).json({ error: 'You can only spin once a week!' });
     }
@@ -3364,7 +3364,7 @@ app.post('/api/me/lucky-spin', requireAuth, (req, res) => {
         { type: 'badge', val: 'Lucky Spinner', label: 'Lucky Spinner Badge' }
     ];
     
-    // Weighted Randomness (10% chance for badge, 40% chance for 100 SC, etc.)
+    
     const r = Math.random();
     let reward;
     if (r < 0.4) reward = rewards[0]; 
@@ -3378,7 +3378,7 @@ app.post('/api/me/lucky-spin', requireAuth, (req, res) => {
         if (!user.badges.includes(reward.val)) {
             user.badges.push(reward.val);
         } else {
-            // If they already have the badge, give them a jackpot of SC instead!
+            
             user.coins += 150;
             reward = { type: 'coins', val: 150, label: '150 SC (Badge Duplicate)' };
         }
@@ -3396,7 +3396,7 @@ app.get('/api/games/random', (req, res) => {
 });
 
 
-// Admin Image Moderation Queue
+
 app.get('/api/moderate/images', requireAuth, (req, res) => {
     const adminUser = db.users.find(u => u.id === req.userId);
     if (!adminUser || adminUser.username.toLowerCase() !== 'admin') return res.status(403).json({ error: 'Admins only.' });
@@ -3415,7 +3415,7 @@ app.post('/api/moderate/images', requireAuth, (req, res) => {
     const adminUser = db.users.find(u => u.id === req.userId);
     if (!adminUser || adminUser.username.toLowerCase() !== 'admin') return res.status(403).json({ error: 'Admins only.' });
     
-    const { gameId, type, imageId, action } = req.body; // action: 'approve' or 'deny'
+    const { gameId, type, imageId, action } = req.body; 
     const game = db.games.find(g => g.id === gameId);
     if (!game) return res.status(404).json({ error: 'Game not found' });
 
@@ -3440,7 +3440,7 @@ app.get('/api/moderate/accessories', requireAuth, requireModerator, requireModPa
 });
 
 app.post('/api/moderate/accessories/:id', requireAuth, requireModerator, requireModPanelUnlocked, (req, res) => {
-    const { action, reason } = req.body; // approve | reject
+    const { action, reason } = req.body; 
     const item = (db.shopItems || []).find(i => i.id === req.params.id);
     if (!item) return res.status(404).json({ error: 'Accessory not found.' });
     if ((item.status || 'approved') !== 'pending') return res.status(400).json({ error: 'Accessory is not pending moderation.' });
@@ -3530,13 +3530,13 @@ app.post('/api/games/:id/updates', requireAuth, (req, res) => {
 });
 
 
-// ==========================================
-// LIVE ONLINE TRACKING
-// ==========================================
+
+
+
 app.post('/api/ping', requireAuth, (req, res) => {
     const { location } = req.body;
     
-    // Update this user's last seen time and location
+    
     onlineUsers[req.userId] = {
         lastSeen: Date.now(),
         location: location || 'website'
@@ -3546,7 +3546,7 @@ app.post('/api/ping', requireAuth, (req, res) => {
     let totalOnline = 0;
     let cityOnline = 0;
 
-    // Count active users and kick out AFK/Disconnected users (no ping for 30 seconds)
+    
     for (let uid in onlineUsers) {
         const slot = onlineUsers[uid];
         const lastSeen = typeof slot === 'number' ? slot : (slot && typeof slot.lastSeen === 'number' ? slot.lastSeen : 0);
@@ -3562,13 +3562,13 @@ app.post('/api/ping', requireAuth, (req, res) => {
     res.json({ totalOnline, cityOnline });
 });
 
-// Analytics Data Receiver
-// Analytics Data Receiver
+
+
 app.post('/api/games/:id/track', requireAuth, (req, res) => {
     const game = db.games.find(g => g.id === req.params.id);
     if (!game) return res.status(404).json({ error: 'Game not found.' });
 
-    // FIX: Initialize analytics if it doesn't exist (prevents the 500 crash)
+    
     if (!game.analytics) {
         game.analytics = {
             uniquePlayers: [],
@@ -3583,12 +3583,12 @@ app.post('/api/games/:id/track', requireAuth, (req, res) => {
 
     const { sessionTimeSeconds, jumps, falls, isMobile } = req.body;
     
-    // Add unique player if not already tracked
+    
     if (!game.analytics.uniquePlayers.includes(req.userId)) {
         game.analytics.uniquePlayers.push(req.userId);
     }
     
-    // Aggregate metrics
+    
     const safeSessionSeconds = Math.max(0, Math.min(6 * 3600, Number(sessionTimeSeconds) || 0));
     game.analytics.totalSessionTimeSeconds += safeSessionSeconds;
     game.analytics.totalJumps += (jumps || 0);
@@ -3597,7 +3597,7 @@ app.post('/api/games/:id/track', requireAuth, (req, res) => {
     if (isMobile) game.analytics.mobileSessions += 1;
     else game.analytics.desktopSessions += 1;
     
-    // Update Peak CCU 
+    
     if (activePlayers[game.id]) {
         const currentCCU = Object.keys(activePlayers[game.id]).length;
         if (currentCCU > game.analytics.peakCCU) {
@@ -3627,7 +3627,7 @@ app.post('/api/games/:id/track', requireAuth, (req, res) => {
     res.json({ success: true });
 });
 
-// Analytics Fetch Endpoint (Restricted to Creators & Group Admins)
+
 app.get('/api/games/:id/analytics', requireAuth, (req, res) => {
     const game = db.games.find(g => g.id === req.params.id);
     if (!game) return res.status(404).json({ error: 'Game not found.' });
@@ -3656,10 +3656,10 @@ app.get('/api/games/:id/analytics', requireAuth, (req, res) => {
 });
 
 
-// --- SCULPT CITY ROUTES ---
-// ==========================================
-// SCULPT CITY ROUTES
-// ==========================================
+
+
+
+
 app.get('/api/city/info', requireAuth, (req, res) => {
     const user = db.users.find(u => u.id === req.userId);
     if (user.cityData) {
@@ -3679,7 +3679,7 @@ app.post('/api/city/claim', requireAuth, (req, res) => {
     const isTaken = db.cityPlots.find(p => p.plotX === plotX && p.plotZ === plotZ && p.neighborhood === neighborhood);
     if (isTaken) return res.status(400).json({ error: 'Plot is already taken!' });
 
-    // Initialize the player with a Starter House and a Sedan.
+    
     user.cityData = { neighborhood, plotX, plotZ, houseType: 'Starter', tutorialComplete: false, vehicles: ['sedan_1'] };
     db.cityPlots.push({
         id: crypto.randomUUID(), userId: user.id, username: user.username,
@@ -3690,15 +3690,15 @@ app.post('/api/city/claim', requireAuth, (req, res) => {
     res.json({ success: true, cityData: user.cityData });
 });
 
-// NEW: Economy Sync (Rewards & Vehicle Purchases)
-// NEW: Economy Sync (Rewards & Vehicle Purchases)
+
+
 app.post('/api/city/sync', requireAuth, (req, res) => {
     const user = db.users.find(u => u.id === req.userId);
     
-    // Grant Coins
+    
     if (req.body.coinsToAdd) user.coins = (user.coins || 0) + req.body.coinsToAdd;
     
-    // Process Vehicle Purchases
+    
     if (user.cityData && req.body.vehicleToBuy) {
         if (!user.cityData.vehicles) user.cityData.vehicles = ['sedan_1'];
         if (user.coins >= req.body.cost) {
@@ -3733,7 +3733,7 @@ app.post('/api/games/:id/play', requireAuth, (req, res) => {
     ensureChallengeProgressDay(user);
     user.challengeProgress.gamesPlayed += 1;
 
-    // PLAY STREAK MATH
+    
     let streakReward = 0;
     const todayStr = new Date().toDateString();
     const lastPlayStr = user.lastPlayDate ? new Date(user.lastPlayDate).toDateString() : '';
@@ -3834,21 +3834,21 @@ app.post('/api/games/:id/sync', requireAuth, (req, res) => {
         const { gameData, genre, lastLocalEditTime, cursor, baseServerEditTime } = req.body || {};
         if (!activeEditors[game.id]) activeEditors[game.id] = {};
         
-        // Store their timestamp AND their 3D cursor position
+        
         activeEditors[game.id][req.userId] = {
             timestamp: Date.now(),
             cursor: cursor || null
         };
 
         const activeUsernames = [];
-        const activeEditorsData = []; // Holds the 3D data of other players
+        const activeEditorsData = []; 
         
         for (let uId in activeEditors[game.id]) {
             if (Date.now() - activeEditors[game.id][uId].timestamp < 4000) {
                 const u = db.users.find(usr => usr.id === uId);
                 if (u) {
                     activeUsernames.push(u.username);
-                    // Send cursor data to everyone EXCEPT the user requesting it
+                    
                     if (uId !== req.userId && activeEditors[game.id][uId].cursor) {
                         activeEditorsData.push({ username: u.username, cursor: activeEditors[game.id][uId].cursor });
                     }
@@ -3902,7 +3902,7 @@ app.post('/api/games/:id/sync', requireAuth, (req, res) => {
             saveDB(); appliedUpdate = true;
         }
 
-        // Return the new activeEditorsData array
+        
         res.json({
             gameData: game.gameData,
             genre: game.genre,
@@ -3932,7 +3932,7 @@ app.post("/api/invite", requireAuth, (req, res) => {
     const key = `${sender.id}_${friendId}`;
     const now = Date.now();
 
-    // ?? 3 minute cooldown (180000 ms)
+    
     if (inviteCooldowns[key] && now - inviteCooldowns[key] < 180000) {
         const remaining = Math.ceil((180000 - (now - inviteCooldowns[key])) / 1000);
         return res.status(429).json({
@@ -3940,10 +3940,10 @@ app.post("/api/invite", requireAuth, (req, res) => {
         });
     }
 
-    // ? save cooldown
+    
     inviteCooldowns[key] = now;
 
-    // ? create notification
+    
     createNotification(friendId, "invite", {
         from: sender.username,
         fromId: sender.id,
@@ -3954,9 +3954,9 @@ app.post("/api/invite", requireAuth, (req, res) => {
     res.json({ success: true });
 });
 
-// ==========================================
-// PLAYSCULPT LIVE
-// ==========================================
+
+
+
 const LIVE_USERNAME_RE = /^[A-Za-z0-9._]{1,20}$/;
 const cleanupLiveViewers = () => {
     const now = Date.now();
@@ -4255,11 +4255,11 @@ app.get('/api/live/stream/:id/signal/pull', requireAuth, (req, res) => {
 });
 
 
-// ==========================================
-// GLOBAL CHAT & SPAM PROTECTION
-// ==========================================
+
+
+
 app.get('/api/chat', (req, res) => {
-    res.json((db.globalChat || []).slice(-50)); // Return last 50 messages
+    res.json((db.globalChat || []).slice(-50)); 
 });
 
 app.post('/api/chat', requireAuth, (req, res) => {
@@ -4267,27 +4267,27 @@ app.post('/api/chat', requireAuth, (req, res) => {
     const text = (req.body.text || '').trim().substring(0, 150);
     if (!text) return res.status(400).json({error: 'Message cannot be empty.'});
 
-    // 1. Account Age Check (30 minutes = 1,800,000 ms)
+    
     const age = Date.now() - (user.createdAt || 0);
     if (age < 1800000) {
         const minsLeft = Math.ceil((1800000 - age) / 60000);
         return res.status(403).json({error: `Account must be 30 minutes old to chat. (${minsLeft} mins remaining)`});
     }
 
-    // 2. Suspension Check
+    
     if (chatSuspensions[req.userId] && Date.now() < chatSuspensions[req.userId]) {
         const secs = Math.ceil((chatSuspensions[req.userId] - Date.now()) / 1000);
         return res.status(403).json({error: `Chat suspended for spamming. Try again in ${secs}s.`});
     }
 
-    // 3. Spam Detection (Max 3 messages in 5 seconds)
+    
     if (!chatActivity[req.userId]) chatActivity[req.userId] = [];
     const now = Date.now();
     chatActivity[req.userId] = chatActivity[req.userId].filter(t => now - t < 5000);
     chatActivity[req.userId].push(now);
 
     if (chatActivity[req.userId].length > 3) { 
-        chatSuspensions[req.userId] = now + 15000; // 15-second suspension
+        chatSuspensions[req.userId] = now + 15000; 
         return res.status(403).json({error: 'Spam detected. Chat suspended for 15 seconds.'});
     }
 
@@ -4298,7 +4298,7 @@ app.post('/api/chat', requireAuth, (req, res) => {
     const newMsg = { id: crypto.randomUUID(), authorName: user.username, text, timestamp: now };
     
     db.globalChat.push(newMsg);
-    if (db.globalChat.length > 100) db.globalChat.shift(); // Keep memory clean
+    if (db.globalChat.length > 100) db.globalChat.shift(); 
     appendChatLog({
         channel: 'global_chat',
         sourceType: 'global',
@@ -4314,9 +4314,9 @@ app.post('/api/chat', requireAuth, (req, res) => {
 });
 
 
-// ==========================================
-// GAME SERVER CHAT
-// ==========================================
+
+
+
 app.get('/api/games/:id/chat', requireAuth, (req, res) => {
     const gameId = req.params.id;
     cleanupGameServerIfInactive(gameId);
@@ -4344,7 +4344,7 @@ app.post('/api/games/:id/chat', requireAuth, (req, res) => {
     gameChatActivity[key] = gameChatActivity[key].filter(t => now - t < 5000);
     gameChatActivity[key].push(now);
 
-    // More than 4 messages in 5 seconds = 12 second cooldown
+    
     if (gameChatActivity[key].length > 4) {
         gameChatSuspensions[key] = now + 12000;
         const secs = Math.ceil((gameChatSuspensions[key] - now) / 1000);
@@ -4442,19 +4442,19 @@ if (Array.isArray(dynamicStates)) {
 
 const others = [];
 for (let uId in activePlayers[gameId]) {
-    // Check if their last ping was within 3 seconds
+    
     if (Date.now() - activePlayers[gameId][uId].timestamp < 3000) {
         if (uId !== req.userId && activePlayers[gameId][uId].sceneId === sceneId) {
             others.push({ userId: uId, ...activePlayers[gameId][uId] });
             grantFriendshipXp(req.userId, uId, 5);
         }
     } else {
-        // Remove timed-out player
+        
         delete activePlayers[gameId][uId];
     }
 }
 
-// If nobody is left in this game server, wipe its temporary server chat too
+
 if (!activePlayers[gameId] || Object.keys(activePlayers[gameId]).length === 0) clearGameServerState(gameId);
 
 const dynamicPayload = activePlayDynamic[gameId] && (Date.now() - activePlayDynamic[gameId].updatedAt < 3000)
@@ -4499,21 +4499,21 @@ app.get('/sitemap.xml', (req, res) => {
   res.sendFile(__dirname + '/sitemap.xml');
 });
 
-// ==========================================
-// SEO PAGE ROUTING
-// ==========================================
-// Serve pre-rendered SEO pages (e.g., visiting /seo/games/123 serves public/seo/games/123.html)
+
+
+
+
 app.get('/seo/*any', (req, res, next) => {
-    // Strip '/seo' from the path to get the relative filename
+    
     const relativePath = req.path.replace('/seo', '');
     let filePath = path.join(__dirname, 'public', 'seo', relativePath);
 
-    // If the path doesn't end in .html, append it so the file system can find it
+    
     if (!filePath.endsWith('.html')) {
         filePath += '.html';
     }
 
-    // Serve the file if it exists; otherwise, pass the request to the SPA catch-all
+    
     if (fs.existsSync(filePath)) {
         res.sendFile(filePath);
     } else {
@@ -4521,7 +4521,7 @@ app.get('/seo/*any', (req, res, next) => {
     }
 });
 
-// Your existing SPA catch-all
+
 app.get('*any', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
