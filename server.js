@@ -1458,6 +1458,26 @@ app.post('/api/users/:username/message', requireAuth, (req, res) => {
     res.json({ message: 'Message sent!' });
 });
 app.get("/api/notifications", requireAuth, (req, res) => {
+    const user = db.users.find(u => u.id === req.userId);
+    let addedFriendRequestNotification = false;
+    if (user && Array.isArray(user.friendRequests)) {
+        user.friendRequests.forEach(requesterId => {
+            const exists = (db.notifications || []).some(n => n.userId === req.userId && n.type === 'friend_request' && n.data && n.data.fromId === requesterId);
+            if (!exists) {
+                const requester = db.users.find(u => u.id === requesterId);
+                db.notifications.push({
+                    id: crypto.randomUUID(),
+                    userId: req.userId,
+                    type: 'friend_request',
+                    data: { from: requester ? requester.username : 'Someone', fromId: requesterId },
+                    read: false,
+                    createdAt: Date.now()
+                });
+                addedFriendRequestNotification = true;
+            }
+        });
+    }
+    if (addedFriendRequestNotification) saveDB();
     const notifs = db.notifications.filter(n => n.userId === req.userId);
     res.json(notifs);
 });
@@ -2126,8 +2146,9 @@ app.post('/api/users/:username/friend-request', requireAuth, (req, res) => {
         targetUser.friendRequests.push(req.userId);
         const sender = db.users.find(u => u.id === req.userId);
         createNotification(targetUser.id, "friend_request", {
-    from: sender ? sender.username : req.userId
-});
+            from: sender ? sender.username : req.userId,
+            fromId: req.userId
+        });
         saveDB();
     }
     res.json({ message: 'Friend request sent.' });
@@ -2140,6 +2161,7 @@ app.post('/api/users/:username/accept-friend', requireAuth, (req, res) => {
 
     if (reqUser.friendRequests.includes(targetUser.id)) {
         reqUser.friendRequests = reqUser.friendRequests.filter(id => id !== targetUser.id);
+        db.notifications = (db.notifications || []).filter(n => !(n.userId === reqUser.id && n.type === 'friend_request' && n.data && n.data.fromId === targetUser.id));
         if(!reqUser.friends.find(f => f.id === targetUser.id)) reqUser.friends.push({ id: targetUser.id, addedAt: Date.now() });
         if(!targetUser.friends.find(f => f.id === reqUser.id)) targetUser.friends.push({ id: reqUser.id, addedAt: Date.now() });
         ensureChallengeProgressDay(reqUser);
@@ -2154,6 +2176,7 @@ app.post('/api/users/:username/reject-friend', requireAuth, (req, res) => {
     const targetUser = db.users.find(u => u.username.toLowerCase() === req.params.username.toLowerCase());
     if (targetUser) {
         reqUser.friendRequests = reqUser.friendRequests.filter(id => id !== targetUser.id);
+        db.notifications = (db.notifications || []).filter(n => !(n.userId === reqUser.id && n.type === 'friend_request' && n.data && n.data.fromId === targetUser.id));
         saveDB();
     }
     res.json({ message: 'Friend request removed.' });

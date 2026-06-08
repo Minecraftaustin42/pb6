@@ -142,6 +142,21 @@
             gap: 12px;
         }
         .list-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .dashboard-page { display: grid; gap: 14px; }
+        .dashboard-page *:not(.btn):not(button) { color: var(--text) !important; }
+        .dashboard-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: start; }
+        .dashboard-welcome { margin: 0; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; color: var(--purple-dark) !important; }
+        .dashboard-user { display: block; margin-top: 4px; font-size: 18px; color: var(--blue) !important; }
+        .dashboard-stats { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 8px; min-width: min(320px, 100%); }
+        .dashboard-stat { border: 1px solid var(--line); background: var(--blue-light); padding: 10px; }
+        .dashboard-stat strong { display: block; font-size: 13px; margin-bottom: 4px; }
+        .dashboard-actions { display: flex; gap: 8px; flex-wrap: wrap; grid-column: 1 / -1; }
+        .dashboard-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr); gap: 14px; align-items: start; }
+        .dashboard-stack { display: grid; gap: 14px; }
+        .dashboard-section-heading { margin: 4px 0 0; color: var(--purple-dark) !important; }
+        .dashboard-card-title { margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); color: var(--purple-dark) !important; }
+        .dashboard-page .game-grid, .dashboard-page .dash-friends-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .dashboard-sponsored-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
 
         .btn, button, .tool-btn, .mobile-btn {
             display: inline-flex;
@@ -296,6 +311,8 @@
             .main-content { padding: 12px; }
             .play-layout { flex-direction: column; }
             .play-sidebar { flex: 1 1 auto; width: 100%; max-height: none; }
+            .dashboard-hero, .dashboard-layout { grid-template-columns: 1fr; }
+            .dashboard-actions .btn { flex: 1 1 160px; }
             .studio-layout { height: auto; min-height: 620px; flex-direction: column; }
             #editor-container-3d { margin-right: 0; min-height: 360px; width: 100%; aspect-ratio: 4 / 3; }
             .explorer-panel { position: relative; width: 100%; height: 240px; border-left: 0; border-top: 1px solid var(--line); }
@@ -658,7 +675,6 @@
             <div class="navbar-links">
                 <a onclick="navigate('create')">Create</a>
                 <a onclick="navigate('library')">Play</a>
-                <a onclick="navigate('create')">Studio</a>
                 <a onclick="logout()">Logout</a>
             </div>
         </div>
@@ -688,7 +704,6 @@
             <div class="sidebar-title">Menu</div>
             <nav>
                 <a onclick="navigate('dashboard')">Home</a>
-                <a onclick="navigate('library')">Discover</a>
                 <a onclick="navigate('library')">Games</a>
                 <a onclick="navigate('create')">Create</a>
                 <a onclick="navigate('create')">Studio</a>
@@ -699,7 +714,7 @@
                 <a onclick="navigate('inventory')">Inventory</a>
                 <a onclick="navigate('messages')">Messages</a>
                 <a onclick="navigate('badges')">Badges</a>
-                <a onclick="navigate('chat')">Messages / Chat</a>
+                <a onclick="navigate('chat')">Global Chat</a>
                 <a onclick="navigate('settings')">Settings</a>
                 <a onclick="enterSculptCity()">Sculpt City</a>
                 <a onclick="navigate('live')">Live</a>
@@ -1318,65 +1333,79 @@
 
 
         <div id="view-dashboard" class="view">
-            <div class="card">
-                <h2 class="card-title">Welcome to Playsculpt, <span id="dash-username"></span>!</h2>
-<h3 style="color: #f39c12; margin-top: 0; display: flex; gap: 20px; flex-wrap: wrap;">
-                    <span>Balance: <span id="dash-coins">0</span> SC</span>
-                    <span style="color: #e74c3c;">Play Streak: <span id="dash-play-streak">0</span> days</span>
-                </h3>
-                <div style="display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
-                    <button class="btn btn-success" onclick="navigate('create')">Launch 3D Game Editor</button>
-                    <button class="btn" onclick="navigate('library')">Play Community Games</button>
-                    <button class="btn btn-info" onclick="playRandomGame()">Random Game</button>
-<button class="btn btn-warning" onclick="openLuckySpin()">Lucky Spin</button>
-                    <button class="btn btn-sm btn-info" onclick="showRandomBuilderTip()">Builder Tip</button>
-                </div>
-            </div>
-            <div class="card mt-20">
-                <h2 class="card-title">Moderator Reward Crates</h2>
-                <p style="margin-top:-8px; color:#666;">Accurate reports can earn crates. Open them for Sculpt Coins.</p>
-                <div id="report-crates-grid" class="game-grid"></div>
-            </div>
-
-<div class="card mt-20" style="background: #fff; padding: 15px; border-radius: 8px;">
-                <h2 class="section-title" style="color: #f39c12; margin-top:0;">Sponsored Studio Assets</h2>
-                <div id="dash-sponsored-assets" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px;">
+            <div class="dashboard-page">
+                <section class="card dashboard-hero">
+                    <div>
+                        <h2 class="dashboard-welcome"><span id="dash-welcome-message">Welcome back</span><span class="dashboard-user" id="dash-username"></span></h2>
                     </div>
-            </div>
-            <div class="card mt-20">
-                <h2 class="card-title">Creator Challenges</h2>
-                <div id="creator-challenges"></div>
-            </div>
+                    <div class="dashboard-stats">
+                        <div class="dashboard-stat"><strong>Balance</strong><span><span id="dash-coins">0</span> SC</span></div>
+                        <div class="dashboard-stat"><strong>Play streak</strong><span><span id="dash-play-streak">0</span> days</span></div>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button class="btn btn-primary" onclick="navigate('create')">Create</button>
+                        <button class="btn" onclick="navigate('library')">Play Games</button>
+                        <button class="btn btn-info" onclick="playRandomGame()">Random Game</button>
+                        <button class="btn btn-warning" onclick="openLuckySpin()">Lucky Spin</button>
+                        <button class="btn btn-secondary" onclick="showRandomBuilderTip()">Builder Tip</button>
+                    </div>
+                </section>
 
-            <div class="card mt-20">
-                <h2 class="card-title">Friends Activity & Friendship Levels</h2>
-                <div id="dashboard-friends-grid" class="dash-friends-grid"></div>
-            </div>
+                <div class="dashboard-layout">
+                    <div class="dashboard-stack">
+                        <section class="card">
+                            <h2 class="dashboard-card-title">Creator Challenges</h2>
+                            <div id="creator-challenges"></div>
+                        </section>
 
-            <div class="card mt-20">
-                <h2 class="card-title">Saved Games</h2>
-                <div id="saved-games-grid" class="game-grid"></div>
-            </div>
+                        <section class="card">
+                            <h2 class="dashboard-card-title">Friends Activity</h2>
+                            <div id="dashboard-friends-grid" class="dash-friends-grid"></div>
+                        </section>
 
-            <div class="card mt-20">
-                <h2 class="card-title">New & Updated Games</h2>
-                <div id="fresh-games-grid" class="game-grid"></div>
-            </div>
-            <div class="card mt-20">
-                <h2 class="card-title">Trending Games</h2>
-                <div id="trending-games-grid" class="game-grid"></div>
-            </div>
-            <div class="card mt-20">
-                <h2 class="card-title">Most Liked Games</h2>
-                <div id="most-liked-games-grid" class="game-grid"></div>
-            </div>
-            <div class="card mt-20">
-                <h2 class="card-title">Recently Played Games</h2>
-                <div id="recent-games-grid" class="game-grid"></div>
-            </div>
-            <div class="card mt-20">
-                <h2 class="card-title">Games You Can Edit</h2>
-                <div id="editable-games-grid" class="game-grid"></div>
+                        <section class="card">
+                            <h2 class="dashboard-card-title">Sponsored Studio Assets</h2>
+                            <div id="dash-sponsored-assets" class="dashboard-sponsored-row"></div>
+                        </section>
+                    </div>
+
+                    <div class="dashboard-stack">
+                        <section class="card">
+                            <h2 class="dashboard-card-title">Saved Games</h2>
+                            <div id="saved-games-grid" class="game-grid"></div>
+                        </section>
+                        <section class="card">
+                            <h2 class="dashboard-card-title">Recently Played</h2>
+                            <div id="recent-games-grid" class="game-grid"></div>
+                        </section>
+                        <section class="card">
+                            <h2 class="dashboard-card-title">Games You Can Edit</h2>
+                            <div id="editable-games-grid" class="game-grid"></div>
+                        </section>
+                    </div>
+                </div>
+
+                <h2 class="dashboard-section-heading">Games</h2>
+                <div class="dashboard-layout">
+                    <section class="card">
+                        <h2 class="dashboard-card-title">New & Updated</h2>
+                        <div id="fresh-games-grid" class="game-grid"></div>
+                    </section>
+                    <section class="card">
+                        <h2 class="dashboard-card-title">Trending</h2>
+                        <div id="trending-games-grid" class="game-grid"></div>
+                    </section>
+                    <section class="card">
+                        <h2 class="dashboard-card-title">Most Liked</h2>
+                        <div id="most-liked-games-grid" class="game-grid"></div>
+                    </section>
+                </div>
+
+                <section class="card">
+                    <h2 class="dashboard-card-title">Moderator Reward Crates</h2>
+                    <p>Accurate reports can earn crates. Open them for Sculpt Coins.</p>
+                    <div id="report-crates-grid" class="game-grid"></div>
+                </section>
             </div>
         </div>
 
@@ -1444,6 +1473,14 @@
 
 
         <div id="view-friends" class="view">
+            <div class="card">
+                <h2 class="card-title">Find Friends</h2>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <input id="friend-search-input" class="form-control" style="flex:1 1 220px;" placeholder="Search users to add" onkeydown="if(event.key==='Enter') searchFriendsToAdd()">
+                    <button class="btn btn-primary" onclick="searchFriendsToAdd()">Search</button>
+                </div>
+                <div id="friend-search-results" class="user-grid mt-10"></div>
+            </div>
             <div class="card">
                 <h2 class="card-title">Friend Requests</h2>
                 <div id="friend-requests-list"></div>
@@ -2420,6 +2457,17 @@
     <script>
 
         const API_BASE = '/api';
+        const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+        const dashboardWelcomeMessages = ['Hi', 'Welcome back', 'Good to see you', 'Ready to build?', "Let's play", 'Back again', 'Have fun', 'Create something', 'Game time', 'You are here'];
+        let lastDashboardWelcome = '';
+        const setDashboardWelcome = () => {
+            const el = document.getElementById('dash-welcome-message');
+            if (!el) return;
+            let next = dashboardWelcomeMessages[Math.floor(Math.random() * dashboardWelcomeMessages.length)];
+            if (dashboardWelcomeMessages.length > 1 && next === lastDashboardWelcome) next = dashboardWelcomeMessages[(dashboardWelcomeMessages.indexOf(next) + 1) % dashboardWelcomeMessages.length];
+            lastDashboardWelcome = next;
+            el.innerText = next;
+        };
         let currentUser = null;
         let systemStatusInterval = null;
         let systemEventSource = null;
@@ -3539,6 +3587,7 @@ checkDailyReward();
             if (viewId !== 'live' && liveState.viewerStreamId) closeLiveWatch();
 
             if (viewId === 'dashboard' && currentUser) {
+                setDashboardWelcome();
                 document.getElementById('dash-username').innerText = currentUser.username;
                 updateCoinsUI();
 loadSponsoredAssetsDashboard();
@@ -3853,6 +3902,37 @@ else if (viewId === 'groups') {
         };
 
 
+        const sendFriendRequestFromSearch = async (username) => {
+            try {
+                await apiCall(`/users/${encodeURIComponent(username)}/friend-request`, 'POST');
+                showModal('Friend Request Sent', `Request sent to ${username}.`);
+                searchFriendsToAdd();
+            } catch (e) {
+                showModal('Friend Request', e.message || 'Could not send friend request.');
+            }
+        };
+
+        const searchFriendsToAdd = async () => {
+            const input = document.getElementById('friend-search-input');
+            const box = document.getElementById('friend-search-results');
+            if (!input || !box) return;
+            const query = input.value.trim();
+            if (!query) { box.innerHTML = '<p>Type a username to search.</p>'; return; }
+            try {
+                const results = await apiCall(`/users/search?q=${encodeURIComponent(query)}`);
+                const filtered = (results || []).filter(u => !currentUser || String(u.username).toLowerCase() !== String(currentUser.username || '').toLowerCase());
+                box.innerHTML = filtered.length === 0 ? '<p>No users found.</p>' : '';
+                filtered.forEach(u => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+                    const safeName = escapeHTML(u.username);
+                    const safeArg = encodeURIComponent(u.username);
+                    card.innerHTML = `<h4><span class="status-dot ${u.isOnline ? 'online' : 'offline'}"></span> ${safeName}</h4><div style="display:flex; gap:6px; flex-wrap:wrap;"><button class="btn btn-sm" onclick="loadProfile(decodeURIComponent('${safeArg}')); navigate('profile');">View</button><button class="btn btn-sm btn-primary" onclick="sendFriendRequestFromSearch(decodeURIComponent('${safeArg}'))">Add Friend</button></div>`;
+                    box.appendChild(card);
+                });
+            } catch (e) { box.innerHTML = '<p>Could not search users.</p>'; }
+        };
+
         const loadFriendsTab = async () => {
             try {
                 const myData = await apiCall('/me');
@@ -3886,6 +3966,8 @@ else if (viewId === 'groups') {
         const removeFriend = async (username) => {
             try { await apiCall(`/users/${encodeURIComponent(username)}/remove-friend`, 'POST'); loadFriendsTab(); } catch(e) {}
         };
+        window.searchFriendsToAdd = searchFriendsToAdd;
+        window.sendFriendRequestFromSearch = sendFriendRequestFromSearch;
 
 
         let currentGroupData = null;
@@ -14245,8 +14327,11 @@ if (n.type === "invite") {
         </button>
     `;
 }
-            if (n.type === "friend_request") div.innerText = "?? Friend Request";
-            if (n.type === "message") div.innerText = "?? Message";
+            if (n.type === "friend_request") {
+                const from = n.data && n.data.from ? n.data.from : 'Someone';
+                div.innerHTML = `<div style="font-weight:700;">Friend request</div><div style="font-size:12px; margin:4px 0 8px;">${escapeHTML(from)} wants to be friends.</div><button class="btn btn-sm btn-primary" onclick="navigate('friends'); document.getElementById('notif-panel').style.display='none';">Review</button>`;
+            }
+            if (n.type === "message") div.innerText = "Message";
 
             list.appendChild(div);
         });
