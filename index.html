@@ -1734,6 +1734,16 @@
 
 
      <div id="view-create" class="view text-center">
+            <div class="card studio-home-panel" id="studio-home-panel">
+                <div>
+                    <h2 class="card-title">Studio Home</h2>
+                    <p class="muted">Start from a clean template, then build with terrain, lighting, physics, and play testing tools.</p>
+                </div>
+                <div class="grid studio-template-grid">
+                    <button class="btn btn-primary" onclick="loadStudioTemplate('baseplate')">Baseplate</button>
+                    <button class="btn btn-secondary" onclick="loadStudioTemplate('grassy')">Grassy Baseplate</button>
+                </div>
+            </div>
             <div class="toolbar" style="background: #fdfdfd; justify-content: space-between;">
                 <div>
                     <span style="font-weight: 600; color:#2c3e50;">Team Create:</span>
@@ -1804,6 +1814,7 @@
                             <button class="tool-btn" onclick="addPart('ladder')">Ladder</button>
                             <button class="tool-btn" onclick="addPart('floatingText')">Floating Text</button>
                             <button class="tool-btn" style="color:#f39c12;font-weight:bold;" onclick="addPart('spawn')">Spawn</button>
+                            <button class="tool-btn" onclick="insertFolder()">Folder</button>
                         </div>
                     </div>
                     <div class="studio-toolbar-group">
@@ -1813,7 +1824,7 @@
                             <button class="tool-btn" style="color:#9b59b6;font-weight:bold;" onclick="addPart('aircraftSeat')">Air Seat</button>
                             <button class="tool-btn" style="color:#9b59b6;font-weight:bold;" onclick="addPart('tool')">Tool</button>
                             <button class="tool-btn" style="color:#1abc9c;font-weight:bold;" onclick="toggleSmartObjectSidebar()">Smart Objects</button>
-                            <button class="tool-btn" style="color:#95a5a6;font-weight:bold;" disabled title="Terrain editing coming soon">Terrain (Soon)</button>
+                            <button class="tool-btn" style="color:#1d5ed8;font-weight:bold;" onclick="toggleTerrainEditor()">Terrain</button>
                             <button class="btn btn-sm btn-warning" onclick="groupAsVehicle()">Group Vehicle</button>
                             <button class="btn btn-sm btn-info" onclick="groupAsAircraft()">Group Aircraft</button>
                         </div>
@@ -1892,8 +1903,10 @@
                             <select id="te-mode" class="form-control">
                                 <option value="raise">Raise</option>
                                 <option value="lower">Lower</option>
+                                <option value="subtract">Subtract</option>
                                 <option value="flatten">Flatten</option>
                                 <option value="paint">Paint</option>
+                                <option value="water">Add Water</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1939,17 +1952,17 @@
                         <div id="vh-list" style="flex-grow:1; overflow-y:auto; padding-right: 10px;"></div>
                     </div>
 
-<div id="script-editor-panel" style="display:none; position:absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; background: rgba(30,30,30,0.95); padding: 15px; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 200; flex-direction: column;">
+<div id="script-editor-panel" style="display:none; position:absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; background: rgba(255,255,255,0.98); padding: 15px; border:1px solid #b9c7ee; z-index: 200; flex-direction: column;">
                         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap:10px; flex-wrap:wrap;">
-                            <h3 style="margin:0; color:#fff;" id="script-editor-title">Three.js + JavaScript Editor</h3>
+                            <h3 style="margin:0; color:#2b176e;" id="script-editor-title">Visual Logic Coming Soon</h3>
                             <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                                 <button class="btn btn-sm btn-info" onclick="toggleUIDesigner()">UI Designer</button>
-                                <button class="btn btn-sm btn-success" onclick="saveScript()">Save JavaScript</button>
+                                <button class="btn btn-sm btn-success" onclick="saveScript()">OK</button>
                                 <button class="btn btn-sm btn-danger" onclick="document.getElementById('script-editor-panel').style.display='none'">Close</button>
                             </div>
                         </div>
-                        <p style="color:#bfc9d4; font-size:12px; margin:0 0 8px 0;">Write plain <strong>JavaScript</strong> powered by <strong>Three.js</strong>. Your code runs inside the live game world with access to <code>THREE</code>, <code>ctx.world</code>, <code>ctx.part</code>, <code>ctx.playerApi</code>, <code>ctx.leaderstats</code>, and <code>ctx.api</code>. Use <code>if (ctx.event === "start")</code>, <code>click</code>, <code>interact</code>, <code>equip</code>, <code>unequip</code>, and <code>update</code> to drive behavior.</p>
-                        <textarea id="sculptscript-editor" style="width:100%; flex:1; min-height:220px; resize:none; background:#111820; color:#dce9ff; border:1px solid #3b4e61; border-radius:6px; padding:10px; font-family:monospace; font-size:13px; line-height:1.45;" spellcheck="false" placeholder="if (ctx.event === 'start') {&#10;  ctx.part.setColor('#22cc88');&#10;  ctx.api.setPath('part.name', 'Launch Pad');&#10;}&#10;&#10;if (ctx.event === 'click') {&#10;  ctx.world.message('You clicked me!', 'JavaScript Object');&#10;  ctx.leaderstats.add('Coins', 5);&#10;}&#10;&#10;if (ctx.event === 'update') {&#10;  ctx.part.rotate(0, ctx.math.degToRad(25) * ctx.deltaTime(), 0);&#10;}"></textarea>
+                        <p style="color:#2b176e; font-size:12px; margin:0 0 8px 0;">Custom creator code is disabled. Existing script fields are preserved for compatibility but are not exposed or executed.</p>
+                        <div id="sculptscript-editor" class="card" style="flex:1; overflow:auto; text-align:left;">Custom scripting has been removed for safety. Existing script data is preserved in saved games but will not run. A visual events/actions system will replace it.</div>
                         <input type="hidden" id="script-editor-target-id">
                     </div>
 
@@ -1998,7 +2011,7 @@
                         <h4 style="margin-top:0; color:#2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 5px;">World Settings</h4>
                         <div class="form-group">
                             <label style="font-size:12px; font-weight:bold;">Gravity:</label>
-                            <input type="number" id="ws-gravity" class="form-control" value="0.08" step="0.01" onchange="updateWorldSettings()">
+                            <input type="number" id="ws-gravity" class="form-control" value="0.055" min="0.02" max="0.14" step="0.005" onchange="updateWorldSettings()">
                         </div>
                       <div class="form-group">
                             <label style="font-size:12px; font-weight:bold;">Sky Color:</label>
@@ -2019,10 +2032,10 @@
                         <div class="form-group">
                             <label style="font-size:12px; font-weight:bold;">Graphics Quality:</label>
                             <select id="ws-graphics-quality" class="form-control" onchange="updateWorldSettings()">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                                <option value="ultra">Ultra</option>
+                                <option value="simple">Simple</option>
+                                <option value="standard" selected>Standard</option>
+                                <option value="advanced">Advanced</option>
+                                <option value="realistic">Realistic</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -2034,6 +2047,20 @@
                                 <input type="checkbox" id="ws-global-shadows" checked onchange="updateWorldSettings()">
                                 Enable Global Shadows
                             </label>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:12px; font-weight:bold; display:flex; align-items:center; gap:8px;">
+                                <input type="checkbox" id="ws-water-enabled" onchange="updateWorldSettings()">
+                                Enable Water
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:12px; font-weight:bold;">Water Level:</label>
+                            <input type="number" id="ws-water-level" class="form-control" value="0" step="0.5" onchange="updateWorldSettings()">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size:12px; font-weight:bold;">Water Color:</label>
+                            <input type="color" id="ws-water-color" class="form-control" style="padding:0; height:35px; cursor:pointer;" value="#2f80ff" onchange="updateWorldSettings()">
                         </div>
                     </div>
 
@@ -2062,6 +2089,7 @@
 
                 <div class="explorer-panel" id="project-explorer" style="height: 60%; border-bottom: 1px solid #ccc;">
                     <h4 style="margin: 0; padding: 10px; background: #2c3e50; color: #fff;">Project Explorer</h4>
+                    <input id="explorer-search" class="form-control" placeholder="Search objects (Ctrl+F)" style="margin:8px; width:calc(100% - 16px);" oninput="renderExplorer()">
                     <div id="explorer-list"></div>
                 </div>
 
@@ -2213,10 +2241,9 @@
                                 <input id="smart-range" class="form-control" type="number" step="0.5" onchange="updateSmartObjectProperties()">
                             </div>
                             <div class="form-group mb-10">
-                                <label><strong>Enable Advanced Script:</strong></label>
-                                <input id="smart-advanced" type="checkbox" onchange="updateSmartObjectProperties()">
+                                <label><strong>Advanced Logic:</strong></label>
+                                <div style="font-size:12px; color:#2b176e;">Visual events/actions are being prepared. Custom code is disabled.</div>
                             </div>
-                            <button class="btn btn-sm btn-info" style="width:100%;" onclick="openScriptEditorForSelected()">Open JavaScript Editor</button>
                         </div>
 
                         </div>
@@ -3528,12 +3555,25 @@ checkDailyReward();
 
         let grpWallSyncInterval = null;
         let dashboardFriendsInterval = null;
+        const getStudioAutosaveKey = () => `ps_autosave_${currentUser?.id || 'guest'}_${currentEditGameId || 'new'}`;
+        const writeStudioAutosave = () => {
+            try {
+                const payload = { edData, genre: document.getElementById('editor-genre')?.value || 'Sandbox', title: document.getElementById('editor-title')?.value || '', gameId: currentEditGameId || null, savedAt: Date.now() };
+                localStorage.setItem(getStudioAutosaveKey(), JSON.stringify(payload));
+                localStorage.setItem('ps_autosave', JSON.stringify(payload));
+                const status = document.getElementById('autosave-status');
+                if (status) status.innerText = 'Autosaved';
+            } catch (e) {}
+        };
+        setInterval(() => {
+            if (document.getElementById('view-create')?.classList.contains('active') && edData && Array.isArray(edData.objects)) writeStudioAutosave();
+        }, 15000);
         const promptStudioAutosaveRecovery = () => {
             if (autosaveRecoveryPrompted || currentEditGameId) return;
             autosaveRecoveryPrompted = true;
             let saved = null;
             try {
-                saved = JSON.parse(localStorage.getItem('ps_autosave') || 'null');
+                saved = JSON.parse(localStorage.getItem(getStudioAutosaveKey()) || localStorage.getItem('ps_autosave') || 'null');
             } catch (e) { saved = null; }
             if (!saved || !saved.edData) return;
 
@@ -7328,14 +7368,14 @@ Keep playing together for more daily rewards.`, 'Aww!');
                 'Press F in Studio to open Quick Insert at your cursor for faster part placement while blocking out builds.',
                 'Keep only one Spawn point until final testing, then add team spawns after gameplay flow is stable.',
                 'For mobile-friendly games, avoid dense detail clusters and keep paths at least 5 studs wide.',
-                'When scripting smart objects, use clear part names so your script references stay reliable.',
+                'Name important parts clearly so visual events can target them later.',
                 'Use Move snap = 1 for structure, then 0.25 for detail passes to keep maps aligned.',
                 'Set no-collide on tiny decorative parts to reduce snagging and improve movement feel.',
-                'Run a Low-graphics test before publishing to verify lighting and fog still look readable.',
+                'Use Simple graphics for low-end devices before publishing.',
                 'Post update logs after each publish so returning players know what changed quickly.',
                 'For PvP, place cover near spawns and avoid direct line-of-sight from spawn to spawn.',
                 'Use terrain sparingly around gameplay lanes so movement stays smooth and predictable.',
-                'In co-build sessions, assign roles: one builder, one scripter, one polish pass.'
+                'In co-build sessions, assign roles: one builder, one tester, one polish pass.'
             ];
             showModal('Builder Tip', tips[Math.floor(Math.random() * tips.length)]);
             const desc = document.getElementById('modal-desc');
@@ -7566,42 +7606,12 @@ Keep playing together for more daily rewards.`, 'Aww!');
             constructor(scriptText, contextFactory) {
                 this.rawScript = String(scriptText || '');
                 this.contextFactory = contextFactory;
-                this.lastError = 0;
-                this.compiled = this.compile(this.rawScript);
+                this.compiled = null;
             }
-
-            compile(source) {
-                const raw = String(source || '');
-                if (!raw.trim()) return null;
-                if (looksLikeLegacySculptScript(raw)) {
-                    printOutput('Legacy Sculpt Script detected. Create mode now supports JavaScript + Three.js only. Please rewrite this script in JavaScript.', 'warning');
-                    return null;
-                }
-                const wrapped = `"use strict";\nreturn (function runUserCode(ctx, THREE){\n${raw}\n});`;
-                try {
-                    return new Function(wrapped)();
-                } catch (e) {
-                    printOutput(`JavaScript compile error: ${e.message}`, 'error');
-                    return null;
-                }
-            }
-
-            run(eventName = 'update') {
-                if (typeof this.compiled !== 'function') return;
-                try {
-                    const ctx = this.contextFactory(eventName);
-                    this.compiled(ctx, THREE);
-                } catch (e) {
-                    const now = Date.now();
-                    if (now - this.lastError > 600) {
-                        printOutput(`JavaScript runtime error (${eventName}): ${e.message}`, 'error');
-                        this.lastError = now;
-                    }
-                }
-            }
-
-            triggerEvent(eventName) { this.run(eventName || 'update'); }
-            invokeHook(name) { this.run(name || 'interact'); }
+            compile() { return null; }
+            run() {}
+            triggerEvent() {}
+            invokeHook() {}
         }
 
 
@@ -7615,15 +7625,44 @@ Keep playing together for more daily rewards.`, 'Aww!');
 
 
 const DEFAULT_STEP_HEIGHT = 1.0;
+const PLAY_PHYSICS_DEFAULTS = {
+    walkSpeed: 0.28,
+    airSpeed: 0.19,
+    jumpVelocity: 1.18,
+    gravity: 0.055,
+    maxFallSpeed: 2.35,
+    groundAccel: 0.24,
+    airAccel: 0.09,
+    groundDrag: 0.78,
+    airDrag: 0.94
+};
+const GRAPHICS_PROFILES = {
+    simple: { shadows: false, pixelRatio: 0.75, fogMultiplier: 0.65, shadowMap: 256, tone: false, clouds: false },
+    standard: { shadows: true, pixelRatio: 1, fogMultiplier: 1, shadowMap: 512, tone: true, clouds: true },
+    advanced: { shadows: true, pixelRatio: 1.25, fogMultiplier: 1.45, shadowMap: 1024, tone: true, clouds: true },
+    realistic: { shadows: true, pixelRatio: 1.5, fogMultiplier: 2, shadowMap: 2048, tone: true, clouds: true }
+};
+const normalizeGraphicsQuality = (quality) => {
+    const q = String(quality || '').toLowerCase();
+    if (q === 'low') return 'simple';
+    if (q === 'medium') return 'standard';
+    if (q === 'high') return 'advanced';
+    if (q === 'ultra') return 'realistic';
+    return GRAPHICS_PROFILES[q] ? q : 'standard';
+};
+const getGraphicsProfile = (settings = {}) => GRAPHICS_PROFILES[normalizeGraphicsQuality(settings.graphicsQuality)] || GRAPHICS_PROFILES.standard;
 const NOSTALGIA_GRAPHICS_DEFAULTS = {
-    gravity: 0.08,
+    gravity: PLAY_PHYSICS_DEFAULTS.gravity,
     skyColor: '#8fd3ff',
-    brightness: 1.15,
-    sunIntensity: 1.25,
-    fogDistance: 260,
-    graphicsQuality: 'high',
-    exposure: 0.98,
-    globalShadows: true
+    brightness: 0.9,
+    sunIntensity: 1.1,
+    fogDistance: 360,
+    graphicsQuality: 'standard',
+    exposure: 1.0,
+    globalShadows: true,
+    waterEnabled: false,
+    waterLevel: 0,
+    waterColor: '#2f80ff'
 };
 const NOSTALGIA_PROFILE_VERSION = 1;
 const applyNostalgiaWorldDefaults = (settings = {}) => ({ ...NOSTALGIA_GRAPHICS_DEFAULTS, ...(settings || {}) });
@@ -7639,6 +7678,11 @@ const normalizeNostalgiaWorldSettings = (settings = {}) => {
         merged.exposure = NOSTALGIA_GRAPHICS_DEFAULTS.exposure;
         merged.globalShadows = NOSTALGIA_GRAPHICS_DEFAULTS.globalShadows;
     }
+    merged.graphicsQuality = normalizeGraphicsQuality(merged.graphicsQuality);
+    merged.gravity = Math.max(0.02, Math.min(0.14, Number(merged.gravity) || PLAY_PHYSICS_DEFAULTS.gravity));
+    merged.waterEnabled = !!merged.waterEnabled;
+    merged.waterLevel = Number.isFinite(Number(merged.waterLevel)) ? Number(merged.waterLevel) : 0;
+    merged.waterColor = merged.waterColor || '#2f80ff';
     merged.graphicsProfileVersion = NOSTALGIA_PROFILE_VERSION;
     return merged;
 };
@@ -7782,7 +7826,15 @@ let currentTransformSpace = 'local';
                     const effect = strength * smoothFalloff;
 
                     if (mode === 'raise') heights[i] += effect;
-                    else if (mode === 'lower') heights[i] -= effect;
+                    else if (mode === 'lower' || mode === 'subtract') heights[i] -= effect;
+                    else if (mode === 'water') {
+                        heights[i] += ((edData.settings?.waterLevel || point.y) - heights[i]) * 0.08 * rawFalloff;
+                        if (!edData.settings) edData.settings = normalizeNostalgiaWorldSettings();
+                        edData.settings.waterEnabled = true;
+                        edData.settings.waterLevel = point.y;
+                        edData.settings.waterColor = '#2f80ff';
+                        colors[i*3] = 47/255; colors[i*3+1] = 128/255; colors[i*3+2] = 255/255;
+                    }
                     else if (mode === 'flatten') heights[i] += (point.y - heights[i]) * 0.1 * rawFalloff;
                     else if (mode === 'paint') {
                         const targetColor = new THREE.Color(colorHex);
@@ -7851,9 +7903,7 @@ let currentTransformSpace = 'local';
                 historyStack.push(JSON.parse(JSON.stringify(edData)));
                 if (historyStack.length > 30) historyStack.shift(); else historyIndex++;
             }
-            if (!currentEditGameId) {
-                localStorage.setItem('ps_autosave', JSON.stringify({ edData, genre: document.getElementById('editor-genre').value, title: document.getElementById('editor-title').value, savedAt: Date.now() }));
-            }
+            writeStudioAutosave();
         };
 
         const mergeRemoteTeamData = (remoteGameData) => {
@@ -8126,6 +8176,28 @@ let currentTransformSpace = 'local';
             return new THREE.BoxGeometry(1, 1, 1);
         };
 
+        const insertFolder = () => {
+            edData.objects.push({ id: crypto.randomUUID(), name: `Folder ${((edData.objects || []).filter(o => o.type === 'folder').length + 1)}`, type: 'folder', children: [] });
+            renderExplorer();
+            recordEdit();
+        };
+        window.insertFolder = insertFolder;
+
+        const loadStudioTemplate = (template) => {
+            if (!confirm('Replace the current studio scene with this template?')) return;
+            const grassy = template === 'grassy';
+            edData = {
+                settings: normalizeNostalgiaWorldSettings({ skyColor: grassy ? '#8fd3ff' : '#eaf1ff', brightness: 0.9, graphicsQuality: 'standard' }),
+                spawn: { x: 0, y: 2, z: 0, scale: { x: 4, y: 1, z: 4 } },
+                objects: [{ id: crypto.randomUUID(), name: grassy ? 'Grassy Baseplate' : 'Baseplate', type: 'block', position: { x: 0, y: -2, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 120, y: 4, z: 120 }, color: grassy ? '#55aa55' : '#ffffff', material: grassy ? 'Grass' : 'Plastic', isAnchored: true, canCollide: true }],
+                uiLayout: [],
+                genre: 'Sandbox'
+            };
+            buildEditorScene();
+            recordEdit(true);
+        };
+        window.loadStudioTemplate = loadStudioTemplate;
+
       const addPart = (type) => {
 
 const dir = new THREE.Vector3();
@@ -8357,6 +8429,10 @@ setTimeout(updateTransformSpaceButton, 0);
 
 
 document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && document.getElementById('view-create')?.classList.contains('active')) {
+                const explorerSearch = document.getElementById('explorer-search');
+                if (explorerSearch) { e.preventDefault(); explorerSearch.focus(); explorerSearch.select(); return; }
+            }
     const active = document.activeElement;
     const tag = active && active.tagName ? active.tagName.toLowerCase() : '';
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
@@ -8463,7 +8539,8 @@ document.addEventListener('keydown', (e) => {
                             document.getElementById('smart-power').value = objData.smart.power || 0;
                             document.getElementById('smart-team').value = objData.smart.team || 'all';
                             document.getElementById('smart-range').value = objData.smart.range || 4;
-                            document.getElementById('smart-advanced').checked = !!objData.smart.advanced;
+                            const smartAdvancedEl = document.getElementById('smart-advanced');
+                            if (smartAdvancedEl) smartAdvancedEl.checked = !!objData.smart.advanced;
                         } else {
                             smartSection.style.display = 'none';
                         }
@@ -8565,22 +8642,14 @@ document.addEventListener('keydown', (e) => {
             objData.smart.power = Math.max(0, Math.min(1000, parseFloat(document.getElementById('smart-power').value) || 0));
             objData.smart.team = document.getElementById('smart-team').value;
             objData.smart.range = Math.max(1, Math.min(30, parseFloat(document.getElementById('smart-range').value) || 4));
-            objData.smart.advanced = document.getElementById('smart-advanced').checked;
+            objData.smart.advanced = false;
             ensureSmartLogicDefaults(objData);
             recordEdit();
         };
         window.updateSmartObjectProperties = updateSmartObjectProperties;
 
         const openScriptEditorForSelected = () => {
-            if (!selectedObjects.length) return showModal('Select Object', 'Select a smart object first.');
-            const primary = selectedObjects[selectedObjects.length - 1];
-            if (primary.userData.isSpawn) return;
-            const objData = edData.objects.find(o => o.id === primary.userData.id);
-            if (!objData) return;
-            if (!objData.smart) objData.smart = { kind: 'custom', title: objData.name || 'Object', power: 0, range: 4, team: 'all', advanced: true };
-            objData.smart.advanced = true;
-            updateSmartObjectProperties();
-            openScriptEditor(objData.id);
+            showModal('Visual Logic', 'Custom code is disabled. Playsculpt Studio will use visual events/actions in a future update.');
         };
         window.openScriptEditorForSelected = openScriptEditorForSelected;
 
@@ -8629,7 +8698,7 @@ document.addEventListener('keydown', (e) => {
                                 <strong style="color:#fff;">${s.name}</strong><br>
                                 <span style="font-size:11px; color:#aaa;">By ${s.authorName}</span>
                             </div>
-                            <button class="btn btn-info btn-sm" onclick="navigator.clipboard.writeText('${s.id}'); showModal('Copied!', 'Sound ID copied to clipboard.\\n\\nUse: ctx.playSound(\\'${s.id}\\'); in your scripts!');">Copy ID</button>
+                            <button class="btn btn-info btn-sm" onclick="navigator.clipboard.writeText('${s.id}'); showModal('Copied!', 'Sound ID copied to clipboard.');">Copy ID</button>
                         </div>
                     `;
                 });
@@ -8707,7 +8776,7 @@ document.addEventListener('keydown', (e) => {
             edData.settings = normalizeNostalgiaWorldSettings(edData.settings || { skyColor: '#7fbeff', brightness: 0.72 });
             if (typeof edData.settings.sunIntensity === 'undefined') edData.settings.sunIntensity = NOSTALGIA_GRAPHICS_DEFAULTS.sunIntensity;
             if (typeof edData.settings.fogDistance === 'undefined') edData.settings.fogDistance = NOSTALGIA_GRAPHICS_DEFAULTS.fogDistance;
-            if (typeof edData.settings.graphicsQuality === 'undefined') edData.settings.graphicsQuality = 'high';
+            if (typeof edData.settings.graphicsQuality === 'undefined') edData.settings.graphicsQuality = 'standard';
             if (typeof edData.settings.exposure === 'undefined') edData.settings.exposure = NOSTALGIA_GRAPHICS_DEFAULTS.exposure;
             const setValue = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; };
             setValue('ws-gravity', edData.settings.gravity);
@@ -8718,8 +8787,12 @@ document.addEventListener('keydown', (e) => {
             setValue('ws-graphics-quality', edData.settings.graphicsQuality);
             setValue('ws-exposure', edData.settings.exposure);
             setValue('ws-global-shadows', areGlobalShadowsEnabled(edData.settings));
+            setValue('ws-water-level', edData.settings.waterLevel || 0);
+            setValue('ws-water-color', edData.settings.waterColor || '#2f80ff');
             const globalShadowsEl = document.getElementById('ws-global-shadows');
             if (globalShadowsEl) globalShadowsEl.checked = areGlobalShadowsEnabled(edData.settings);
+            const waterEl = document.getElementById('ws-water-enabled');
+            if (waterEl) waterEl.checked = !!edData.settings.waterEnabled;
             const panel = document.getElementById('world-settings-panel');
             if (panel) panel.style.display = 'block';
         };
@@ -8727,14 +8800,17 @@ document.addEventListener('keydown', (e) => {
 
         const updateWorldSettings = () => {
             const val = (id) => document.getElementById(id);
-            edData.settings.gravity = parseFloat((val('ws-gravity') || {}).value) || 0.08;
+            edData.settings.gravity = Math.max(0.02, Math.min(0.14, parseFloat((val('ws-gravity') || {}).value) || PLAY_PHYSICS_DEFAULTS.gravity));
             edData.settings.skyColor = ((val('ws-skycolor') || {}).value) || '#7fbeff';
             edData.settings.brightness = parseFloat((val('ws-brightness') || {}).value) || NOSTALGIA_GRAPHICS_DEFAULTS.brightness;
             edData.settings.sunIntensity = parseFloat((val('ws-sun-intensity') || {}).value) || NOSTALGIA_GRAPHICS_DEFAULTS.sunIntensity;
             edData.settings.fogDistance = parseFloat((val('ws-fog-distance') || {}).value) || NOSTALGIA_GRAPHICS_DEFAULTS.fogDistance;
-            edData.settings.graphicsQuality = ((val('ws-graphics-quality') || {}).value) || 'high';
+            edData.settings.graphicsQuality = normalizeGraphicsQuality(((val('ws-graphics-quality') || {}).value) || 'standard');
             edData.settings.exposure = parseFloat((val('ws-exposure') || {}).value) || NOSTALGIA_GRAPHICS_DEFAULTS.exposure;
             edData.settings.globalShadows = !!((val('ws-global-shadows') || {}).checked);
+            edData.settings.waterEnabled = !!((val('ws-water-enabled') || {}).checked);
+            edData.settings.waterLevel = parseFloat((val('ws-water-level') || {}).value) || 0;
+            edData.settings.waterColor = ((val('ws-water-color') || {}).value) || '#2f80ff';
             edData.settings.graphicsProfileVersion = NOSTALGIA_PROFILE_VERSION;
             applyWorldSettings(); recordEdit();
         };
@@ -8748,16 +8824,17 @@ document.addEventListener('keydown', (e) => {
                 const fogDistance = Math.max(260, edData.settings.fogDistance || NOSTALGIA_GRAPHICS_DEFAULTS.fogDistance);
                 edScene.fog = new THREE.Fog(edData.settings.skyColor, fogDistance * 0.3461538462, fogDistance);
                 if (edRenderer) {
-                    const q = (edData.settings.graphicsQuality === 'ultra') ? 'ultra' : 'high';
-                    edRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+                    const profile = getGraphicsProfile(edData.settings);
+                    edRenderer.setPixelRatio(Math.min(profile.pixelRatio, window.devicePixelRatio || 1));
+                    edRenderer.toneMapping = profile.tone ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
                     edRenderer.toneMappingExposure = Math.max(0.65, Math.min(1.6, (edData.settings.exposure || NOSTALGIA_GRAPHICS_DEFAULTS.exposure)));
                     edRenderer.outputEncoding = THREE.sRGBEncoding;
-                    edRenderer.physicallyCorrectLights = true;
-                    edRenderer.shadowMap.enabled = shadow;
-                    edRenderer.shadowMap.type = q === 'ultra' ? THREE.PCFSoftShadowMap : THREE.PCFSoftShadowMap;
+                    edRenderer.physicallyCorrectLights = profile.tone;
+                    edRenderer.shadowMap.enabled = shadow && profile.shadows;
+                    edRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
                     if (edDirectionalLight) {
-                        edDirectionalLight.castShadow = shadow;
-                        edDirectionalLight.shadow.mapSize.set(q === 'ultra' ? 1024 : 512, q === 'ultra' ? 1024 : 512);
+                        edDirectionalLight.castShadow = shadow && profile.shadows;
+                        edDirectionalLight.shadow.mapSize.set(profile.shadowMap, profile.shadowMap);
                         edDirectionalLight.shadow.radius = 3.3;
                         edDirectionalLight.shadow.bias = -0.0005;
                     }
@@ -8797,24 +8874,26 @@ document.addEventListener('keydown', (e) => {
        const renderExplorer = () => {
             const list = document.getElementById('explorer-list');
             if (!list) return;
+            const q = ((document.getElementById('explorer-search') || {}).value || '').toLowerCase().trim();
             const html = [];
             html.push(`<div class="explorer-item ${isEditingSettings ? 'selected' : ''}" data-kind="settings" onclick="selectSettings()"><span>World Settings</span></div>`);
 
-            if (edData.spawn) {
+            if (edData.spawn && (!q || 'spawn point'.includes(q))) {
                 const isSel = selectedObjects.some(m => m.userData.isSpawn);
                 html.push(`<div class="explorer-item ${isSel ? 'selected' : ''}" data-kind="spawn" onclick="selectObjectById('spawn', event.shiftKey)"><span>Spawn Point</span></div>`);
             }
 
             edData.objects.forEach(obj => {
+                const name = String(obj.name || (obj.type === 'folder' ? 'Folder' : 'Part'));
+                if (q && !name.toLowerCase().includes(q) && !String(obj.type || '').toLowerCase().includes(q)) return;
                 const isSel = selectedObjects.some(m => m.userData.id === obj.id);
-                const scriptIndicator = (obj.script && obj.script.trim() !== '') ? '<span style="color:#f1c40f; margin-right:5px;">?</span>' : '';
-                const safeName = String(obj.name || 'Part').replace(/'/g, "\\'");
+                const safeName = name.replace(/'/g, "\'");
+                const icon = obj.type === 'folder' ? 'Folder' : (obj.type === 'spawn' ? 'Spawn' : 'Part');
                 html.push(`
                     <div class="explorer-item ${isSel ? 'selected' : ''}" data-kind="object" data-id="${obj.id}" onclick="selectObjectById('${obj.id}', event.shiftKey)">
-                        <span ondblclick="renameObject('${obj.id}', '${safeName}')">${scriptIndicator}${obj.name}</span>
+                        <span ondblclick="renameObject('${obj.id}', '${safeName}')">${icon}: ${name}</span>
                         <div>
-                            <button style="background:none; border:none; cursor:pointer;" title="Edit Script" onclick="event.stopPropagation(); openScriptEditor('${obj.id}')">??</button>
-                            <button style="background:none; border:none; cursor:pointer;" title="Rename" onclick="event.stopPropagation(); renameObject('${obj.id}', '${safeName}')">??</button>
+                            <button style="background:none; border:none; cursor:pointer;" title="Rename" onclick="event.stopPropagation(); renameObject('${obj.id}', '${safeName}')">Rename</button>
                         </div>
                     </div>
                 `);
@@ -9167,27 +9246,17 @@ if (item.type === 'button' && item.onClickEvent) {
         document.addEventListener('fullscreenchange', updatePlayFullscreenButton);
 
         const openScriptEditor = (id) => {
-            const obj = edData.objects.find(o => o.id === id);
-            if (!obj) return;
-            document.getElementById('script-editor-title').innerText = `JavaScript: ${obj.name}`;
-            document.getElementById('script-editor-target-id').value = id;
+            document.getElementById('script-editor-title').innerText = 'Visual Logic Coming Soon';
+            document.getElementById('script-editor-target-id').value = id || '';
             document.getElementById('script-editor-panel').style.display = 'flex';
-            document.getElementById('sculptscript-editor').value = obj.script || '';
         };
 
         const saveScript = () => {
-            const id = document.getElementById('script-editor-target-id').value;
-            const scriptText = String(document.getElementById('sculptscript-editor').value || '').slice(0, 12000);
-            const obj = edData.objects.find(o => o.id === id);
-            if (obj) {
-                localEditedObjectIds.add(obj.id);
-                localLockedObjectUntil[obj.id] = Date.now() + 2200;
-                obj.script = scriptText;
-                recordEdit();
-                renderExplorer();
-                document.getElementById('script-editor-panel').style.display = 'none';
-            }
+            document.getElementById('script-editor-panel').style.display = 'none';
         };
+
+        window.openScriptEditor = openScriptEditor;
+        window.saveSculptScript = saveScript;
 
         const renameObject = (id, currentName) => {
             const newName = prompt("Rename object:", currentName);
@@ -9442,6 +9511,7 @@ const promptClearEditor = () => {
             editorChunkGroups = new Map();
 
             edData.objects.forEach(objData => {
+if (objData.type === 'folder') return;
 if (objData.type === 'vehicle' || objData.type === 'aircraft') {
                     const group = new THREE.Group();
                     group.position.set(objData.position.x, objData.position.y, objData.position.z);
@@ -9515,6 +9585,7 @@ if (objData.type === 'vehicle' || objData.type === 'aircraft') {
 
             if (terrainCursor) { edScene.remove(terrainCursor); terrainCursor = null; }
             if (terrainMesh) { edScene.remove(terrainMesh); terrainMesh = null; }
+            [...edScene.children].filter(c => c.userData?.isEditorWater).forEach(c => edScene.remove(c));
         if (edData.terrain && edData.terrain.active) {
                 const geo = new THREE.PlaneGeometry(edData.terrain.size, edData.terrain.size, edData.terrain.res - 1, edData.terrain.res - 1);
                 geo.rotateX(-Math.PI / 2);
@@ -9534,6 +9605,15 @@ if (objData.type === 'vehicle' || objData.type === 'aircraft') {
                 }));
                 terrainMesh.receiveShadow = areGlobalShadowsEnabled(edData.settings);
                 edScene.add(terrainMesh);
+                if (edData.settings?.waterEnabled) {
+                    const wGeo = new THREE.PlaneGeometry(edData.terrain.size, edData.terrain.size, 1, 1);
+                    wGeo.rotateX(-Math.PI / 2);
+                    const wMat = new THREE.MeshLambertMaterial({ color: edData.settings.waterColor || '#2f80ff', transparent: true, opacity: 0.42, side: THREE.DoubleSide });
+                    const wMesh = new THREE.Mesh(wGeo, wMat);
+                    wMesh.position.y = edData.settings.waterLevel || 0;
+                    wMesh.userData.isEditorWater = true;
+                    edScene.add(wMesh);
+                }
 
                 terrainCursor = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 4, 16), new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true, transparent: true, opacity: 0.5 }));
                 terrainCursor.visible = isTerrainMode; edScene.add(terrainCursor); updateTerrainCursor();
@@ -9628,6 +9708,8 @@ if (objData.type === 'vehicle' || objData.type === 'aircraft') {
             const groupId = document.getElementById('editor-group-publish').value;
             if (!title) return showModal('Hold up!', 'Please enter a title for your game.');
             if (!edData.spawn) return showModal('Incomplete Game', 'Please place a Spawn point for the player.');
+            edData.settings = normalizeNostalgiaWorldSettings(edData.settings || {});
+            (edData.objects || []).forEach(o => { if (o && typeof o.script === 'string') o.script = ''; });
             try {
                 if (currentEditGameId) {
                     recordEdit();
@@ -9637,6 +9719,7 @@ if (objData.type === 'vehicle' || objData.type === 'aircraft') {
                 } else {
                     isTeamEditingMode = false;
                     await apiCall('/games', 'POST', { title, gameData: edData, genre, groupId });
+                    localStorage.removeItem(getStudioAutosaveKey());
                     localStorage.removeItem('ps_autosave');
                     showModal('Published!', 'Your game is now live. You earned the Creator badge!', 'Awesome', () => { document.getElementById('editor-title').value = ''; clearEditor(); navigate('library'); });
                 }
@@ -9764,7 +9847,7 @@ if (objData.type === 'vehicle' || objData.type === 'aircraft') {
 playerObj = {
         x: 0, y: 10, z: 0,
         vx: 0, vy: 0, vz: 0, rotY: 0,
-        speed: 0.2, jump: 4.8,
+        speed: PLAY_PHYSICS_DEFAULTS.walkSpeed, jump: PLAY_PHYSICS_DEFAULTS.jumpVelocity,
         health: 100,
         blasterDamage: 20, blasterSpeed: 2.5, blasterSpread: 0, blasterFireRate: 150, blasterLifetime: 100, blasterColor: '#ffff00', lastShotAt: 0,
         grounded: false, sitting: false, seatCooldown: 0
@@ -10199,27 +10282,28 @@ const loadPsworld = (event) => {
 
 const applyPlayGraphicsSettings = (settings = {}) => {
             if (!playScene || !playRenderer) return;
-            const quality = settings.graphicsQuality === 'ultra' ? 'ultra' : 'high';
+            const profile = getGraphicsProfile(settings);
             const exposure = Math.max(0.65, Math.min(1.6, (settings.exposure || NOSTALGIA_GRAPHICS_DEFAULTS.exposure)));
-            const fogDistance = Math.max(260, settings.fogDistance || NOSTALGIA_GRAPHICS_DEFAULTS.fogDistance);
+            const fogDistance = Math.max(180, (settings.fogDistance || NOSTALGIA_GRAPHICS_DEFAULTS.fogDistance) * profile.fogMultiplier);
 
-            playScene.fog = new THREE.Fog(settings.skyColor || '#8fd3ff', fogDistance * 0.3461538462, fogDistance);
-            playRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+            playScene.fog = new THREE.Fog(settings.skyColor || '#8fd3ff', fogDistance * 0.35, fogDistance);
+            playRenderer.setPixelRatio(Math.min(profile.pixelRatio, window.devicePixelRatio || 1));
+            playRenderer.toneMapping = profile.tone ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
             playRenderer.toneMappingExposure = exposure;
             playRenderer.outputEncoding = THREE.sRGBEncoding;
-            playRenderer.physicallyCorrectLights = true;
-            const shadowsEnabled = areGlobalShadowsEnabled(settings);
+            playRenderer.physicallyCorrectLights = profile.tone;
+            const shadowsEnabled = areGlobalShadowsEnabled(settings) && profile.shadows;
             playRenderer.shadowMap.enabled = shadowsEnabled;
-            playRenderer.shadowMap.type = quality === 'ultra' ? THREE.PCFSoftShadowMap : THREE.PCFSoftShadowMap;
+            playRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
             if (playDirectionalLight) {
                 playDirectionalLight.intensity = Math.max(0.45, settings.sunIntensity || NOSTALGIA_GRAPHICS_DEFAULTS.sunIntensity);
                 playDirectionalLight.castShadow = shadowsEnabled;
-                playDirectionalLight.shadow.mapSize.set(quality === 'ultra' ? 1024 : 512, quality === 'ultra' ? 1024 : 512);
-                playDirectionalLight.shadow.radius = 3.4;
+                playDirectionalLight.shadow.mapSize.set(profile.shadowMap, profile.shadowMap);
+                playDirectionalLight.shadow.radius = profile.shadowMap >= 1024 ? 3.4 : 1.8;
                 playDirectionalLight.shadow.bias = -0.0005;
                 playDirectionalLight.shadow.normalBias = 0.015;
             }
-            if (playAmbientLight) playAmbientLight.intensity = Math.max(0.45, settings.brightness || NOSTALGIA_GRAPHICS_DEFAULTS.brightness);
+            if (playAmbientLight) playAmbientLight.intensity = Math.max(0.35, settings.brightness || NOSTALGIA_GRAPHICS_DEFAULTS.brightness);
         };
 
 const startGame = () => {
@@ -10305,8 +10389,8 @@ playRenderer.domElement.addEventListener('wheel', (e) => {
             playerObj.z = chosenSpawn.z || 0;
             playerObj.vx = 0; playerObj.vy = 0; playerObj.vz = 0; playerObj.rotY = 0;
             playTouchMove.x = 0; playTouchMove.y = 0;
-playerObj.speed = 0.26;
-playerObj.jump = 3.2;
+playerObj.speed = PLAY_PHYSICS_DEFAULTS.walkSpeed;
+playerObj.jump = PLAY_PHYSICS_DEFAULTS.jumpVelocity;
             playerObj.health = 100;
             playerObj.blasterDamage = 20; playerObj.blasterSpeed = 2.5; playerObj.blasterSpread = 0; playerObj.blasterFireRate = 150; playerObj.blasterLifetime = 100; playerObj.blasterColor = '#ffff00'; playerObj.lastShotAt = 0;
             playerObj.sitting = false;
@@ -10323,7 +10407,7 @@ playCamera.position.set(playerObj.x, playerObj.y + 8, playerObj.z + 12);
 
 window.playControls.enablePan = false;
 window.playControls.enableDamping = true;
-window.playControls.dampingFactor = 0.14;
+window.playControls.dampingFactor = 0.09;
 window.playControls.minDistance = playCameraOrbitState.minDistance;
 window.playControls.maxDistance = playCameraOrbitState.maxDistance;
 window.playControls.rotateSpeed = 0.95;
@@ -10660,8 +10744,8 @@ updatePlayFullscreenButton();
                         playMeshes = playMeshes.filter(m => m !== target);
                     },
                     message: (msg, title = 'Script') => showModal(title, String(msg || '')),
-                    getGravity: () => safeNum(activeLevel?.settings?.gravity, 0.08),
-                    setGravity: (value = 0.08) => { if (activeLevel?.settings) activeLevel.settings.gravity = Math.max(0, Math.min(5, safeNum(value, 0.08))); },
+                    getGravity: () => safeNum(activeLevel?.settings?.gravity, PLAY_PHYSICS_DEFAULTS.gravity),
+                    setGravity: (value = PLAY_PHYSICS_DEFAULTS.gravity) => { if (activeLevel?.settings) activeLevel.settings.gravity = Math.max(0.02, Math.min(0.14, safeNum(value, PLAY_PHYSICS_DEFAULTS.gravity))); },
                     setSkyColor: (hex = '#87CEEB') => { if (activeLevel?.settings) activeLevel.settings.skyColor = String(hex); if (playScene) playScene.background = new THREE.Color(String(hex)); }
                 },
                 floatingText: {
@@ -10762,6 +10846,10 @@ if (window.playTerrainMesh) {
         if (playScene) playScene.remove(window.playTerrainMesh);
         window.playTerrainMesh = null;
     }
+    if (window.playWaterMesh) {
+        if (playScene) playScene.remove(window.playWaterMesh);
+        window.playWaterMesh = null;
+    }
 
             playMeshes.forEach(m => playScene.remove(m)); playMeshes = [];
             playChunkGroups.forEach(g => playScene.remove(g));
@@ -10775,6 +10863,7 @@ if (window.playTerrainMesh) {
             const staticColliderBoxes = [];
 
             (activeLevel.objects || []).forEach(objData => {
+if (objData.type === 'folder') return;
 if (objData.type === 'objModel') {
                     const objGroup = buildOBJGroup(objData, true);
                     if (!objGroup) return;
@@ -10809,12 +10898,7 @@ else if (cData.type === 'aircraftSeat') geo = new THREE.BoxGeometry(1, 0.5, 1);
                         playMeshes.push(childMesh);
                     });
 
-                    const vehicleScriptSource = objData.script || '';
-                    if (vehicleScriptSource.trim() !== '') {
-                        const engine = new SculptScriptEngine(vehicleScriptSource, (eventName) => buildScriptContext(group, eventName));
-                        group.userData.sculptEngine = engine;
-                        engine.triggerEvent('start');
-                    }
+                    group.userData.sculptEngine = null;
                     const chunk = getChunkGroup(playScene, playChunkGroups, chunkKeyFromPos(objData.position || {}), 0);
                     chunk.add(group); playMeshes.push(group);
 
@@ -10830,7 +10914,7 @@ else if (cData.type === 'aircraftSeat') geo = new THREE.BoxGeometry(1, 0.5, 1);
                     mat.transparent = objTransparency > 0 || mat.transparent;
                     mat.opacity = Math.max(0.02, 1 - objTransparency);
 
-                    const hasScript = !!((objData.script || '').trim());
+                    const hasScript = false;
                     const isSimpleStatic = canUseInstancing &&
                         INSTANCABLE_PLAY_TYPES.has(objData.type) &&
                         !hasScript &&
@@ -10872,12 +10956,7 @@ else if (cData.type === 'aircraftSeat') geo = new THREE.BoxGeometry(1, 0.5, 1);
                     mesh.userData = { id: objData.id, compiledScript: null, isTool: objData.type === 'tool', isEquipped: false, type: objData.type, noCollide: (objData.noCollide || objData.canCollide === false), isAnchored: objData.isAnchored !== false, smart: objData.smart || null, smartState: {} };
                     if (objData.type === 'floatingText') applyFloatingTextVisual(mesh, objData);
 
-                    const scriptSource = objData.script || '';
-                    if (scriptSource.trim() !== '') {
-                        const engine = new SculptScriptEngine(scriptSource, (eventName) => buildScriptContext(mesh, eventName));
-                        mesh.userData.sculptEngine = engine;
-                        engine.triggerEvent('start');
-                    }
+                    mesh.userData.sculptEngine = null;
 
                     if (objData.type === 'tool') { playerInventory.push({ data: objData, mesh: mesh }); playMeshes.push(mesh); }
                     else {
@@ -10931,6 +11010,17 @@ else if (cData.type === 'aircraftSeat') geo = new THREE.BoxGeometry(1, 0.5, 1);
                 }));
                 playTerrain.receiveShadow = areGlobalShadowsEnabled(activeLevel.settings);
                 playScene.add(playTerrain); window.playTerrainMesh = playTerrain;
+            }
+            if (activeLevel.settings?.waterEnabled) {
+                const waterSize = activeLevel.terrain?.size || 600;
+                const waterGeo = new THREE.PlaneGeometry(waterSize, waterSize, 32, 32);
+                waterGeo.rotateX(-Math.PI / 2);
+                const waterMat = new THREE.MeshPhongMaterial({ color: activeLevel.settings.waterColor || '#2f80ff', transparent: true, opacity: 0.48, shininess: 80, side: THREE.DoubleSide });
+                const water = new THREE.Mesh(waterGeo, waterMat);
+                water.position.y = activeLevel.settings.waterLevel || 0;
+                water.userData.isWater = true;
+                playScene.add(water);
+                window.playWaterMesh = water;
             }
 
 
@@ -11495,7 +11585,7 @@ const updateChatBubbles = () => {
         const rebuildCannonWorld = () => {
             if (!window.CANNON || !playScene) return;
             physicsWorld = new CANNON.World();
-            physicsWorld.gravity.set(0, -(activeLevel?.settings?.gravity || 0.08) * 90, 0);
+            physicsWorld.gravity.set(0, -(activeLevel?.settings?.gravity || PLAY_PHYSICS_DEFAULTS.gravity) * 115, 0);
             physicsWorld.broadphase = new CANNON.NaiveBroadphase();
             physicsWorld.solver.iterations = 10;
             physicsWorld.defaultContactMaterial.friction = 0.42;
@@ -11515,8 +11605,8 @@ const updateChatBubbles = () => {
                 });
                 body.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
                 body.quaternion.set(mesh.quaternion.x, mesh.quaternion.y, mesh.quaternion.z, mesh.quaternion.w);
-                body.linearDamping = dynamic ? 0.12 : 0.99;
-                body.angularDamping = dynamic ? (mesh.userData?.type === 'sphere' ? 0.05 : 0.28) : 0.99;
+                body.linearDamping = dynamic ? (mesh.userData?.type === 'sphere' ? 0.03 : 0.12) : 0.99;
+                body.angularDamping = dynamic ? (mesh.userData?.type === 'sphere' ? 0.01 : 0.28) : 0.99;
                 body.allowSleep = false;
                 physicsWorld.addBody(body);
                 physicsBodies.push(body);
@@ -11704,7 +11794,7 @@ const updateChatBubbles = () => {
                     vehicle.userData.currentSpeed += (targetSpeed - vehicle.userData.currentSpeed) * 0.08;
 
 
-                    vehicle.userData.vy = (vehicle.userData.vy || 0) - (activeLevel.settings ? activeLevel.settings.gravity : 0.08) * 0.15 * frameScale;
+                    vehicle.userData.vy = (vehicle.userData.vy || 0) - (activeLevel.settings ? activeLevel.settings.gravity : PLAY_PHYSICS_DEFAULTS.gravity) * 0.15 * frameScale;
                     vehicle.position.y += vehicle.userData.vy;
 
                     vehicle.updateMatrixWorld(true);
@@ -11842,14 +11932,14 @@ const updateChatBubbles = () => {
                 moveDir.addScaledVector(camRight, inputX);
             }
 
-            const baseWalkSpeed = 0.46;
-            const airControlSpeed = 0.32;
+            const baseWalkSpeed = playerObj.speed || PLAY_PHYSICS_DEFAULTS.walkSpeed;
+            const airControlSpeed = Math.min(PLAY_PHYSICS_DEFAULTS.airSpeed, baseWalkSpeed * 0.72);
             const targetSpeed = playerObj.grounded ? baseWalkSpeed : airControlSpeed;
             if (moveDir.lengthSq() > 0) {
                 moveDir.normalize();
                 const targetVx = moveDir.x * targetSpeed;
                 const targetVz = moveDir.z * targetSpeed;
-                const accel = playerObj.grounded ? 0.18 : 0.1;
+                const accel = playerObj.grounded ? PLAY_PHYSICS_DEFAULTS.groundAccel : PLAY_PHYSICS_DEFAULTS.airAccel;
                 playerObj.vx += (targetVx - playerObj.vx) * accel;
                 playerObj.vz += (targetVz - playerObj.vz) * accel;
                 const targetYaw = Math.atan2(moveDir.x, moveDir.z);
@@ -11859,7 +11949,7 @@ const updateChatBubbles = () => {
                 playerObj.rotY += yawDiff * 0.22;
                 resolveSlopeLift(playerObj.x, playerObj.y, playerObj.z);
             } else {
-                const drag = playerObj.grounded ? 0.82 : 0.94;
+                const drag = playerObj.grounded ? PLAY_PHYSICS_DEFAULTS.groundDrag : PLAY_PHYSICS_DEFAULTS.airDrag;
                 playerObj.vx *= drag;
                 playerObj.vz *= drag;
             }
@@ -11939,7 +12029,17 @@ const updateChatBubbles = () => {
             }
             else {
 
-                playerObj.vy -= (activeLevel.settings ? activeLevel.settings.gravity : 0.08) * frameScale;
+                const waterLevel = activeLevel.settings?.waterEnabled ? (activeLevel.settings.waterLevel || 0) : null;
+                const inWater = waterLevel !== null && playerObj.y < waterLevel + 2.2;
+                if (inWater) {
+                    playerObj.vy += (waterLevel + 1.4 - playerObj.y) * 0.012 * frameScale;
+                    playerObj.vy *= 0.86;
+                    playerObj.vx *= 0.92;
+                    playerObj.vz *= 0.92;
+                } else {
+                    playerObj.vy -= (activeLevel.settings ? activeLevel.settings.gravity : PLAY_PHYSICS_DEFAULTS.gravity) * frameScale;
+                    playerObj.vy = Math.max(playerObj.vy, -PLAY_PHYSICS_DEFAULTS.maxFallSpeed);
+                }
             }
 
 
@@ -11992,7 +12092,7 @@ const updateChatBubbles = () => {
 
             const wantsJump = playInput.justJumped || jumpBufferFrames > 0;
             if (wantsJump && (playerObj.grounded || coyoteFrames > 0)) {
-                playerObj.vy = playerObj.jump;
+                playerObj.vy = Math.min(playerObj.jump, PLAY_PHYSICS_DEFAULTS.jumpVelocity);
                 playerObj.grounded = false;
                 coyoteFrames = 0;
                 jumpBufferFrames = 0;
@@ -12549,7 +12649,7 @@ const resetServerLeaderboardUI = () => {
                 edData.objects.push(groupObj);
                 selectObject(null);
                 buildEditorScene(); recordEdit();
-                showModal('Vehicle Created!', 'Parts grouped. Add a script to the vehicle and a seat to drive it!');
+                showModal('Vehicle Created!', 'Parts grouped. Add a seat to drive it.');
             }
         };
 
@@ -12580,7 +12680,7 @@ const groupAsAircraft = () => {
             if (partsIncluded > 0) {
                 edData.objects.push(groupObj); selectObject(null);
                 buildEditorScene(); recordEdit();
-                showModal('Aircraft Created!', 'Add an aircraft script and an Air Seat to fly it!');
+                showModal('Aircraft Created!', 'Add an Air Seat to fly it.');
             }
         };
 
@@ -13008,12 +13108,12 @@ const groupAsAircraft = () => {
 
             activeLevel = {
                 settings: {
-                    gravity: 0.08,
+                    gravity: PLAY_PHYSICS_DEFAULTS.gravity,
                     skyColor: isIndustrial ? '#71808f' : (isGrass ? '#5b88a5' : '#a37b45'),
                     brightness: isIndustrial ? 0.62 : 0.68,
                     sunIntensity: isIndustrial ? 1.0 : 1.28,
                     fogDistance: isIndustrial ? 1100 : 1450,
-                    graphicsQuality: 'high',
+                    graphicsQuality: 'standard',
                     exposure: isIndustrial ? 0.95 : 1.05
                 },
                 spawn: isIndustrial ? { x: 0, y: 2, z: 380 } : { x: cityGlobalData.cityData.plotX * 50, y: 2, z: (cityGlobalData.cityData.plotZ * 50) + 15 },
